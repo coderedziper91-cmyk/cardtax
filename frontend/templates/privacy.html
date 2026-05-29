@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="How CardTax handles your data.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="Privacy policy">
+  <meta property="og:description" content="How CardTax handles your data.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Privacy policy">
+  <meta name="twitter:description" content="How CardTax handles your data.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .legal { max-width: 680px; margin: 0 auto; }
+    .legal h3 {
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      margin: 36px 0 10px;
+    }
+    .legal p, .legal li {
+      color: var(--ink-soft);
+      font-size: 14.5px;
+      line-height: 1.7;
+      margin: 0 0 12px;
+    }
+    .legal ul { padding-left: 18px; margin: 0 0 12px; }
+    .legal a { color: var(--accent); border-bottom: 1px solid var(--accent-soft); }
+    .legal a:hover { border-bottom-color: var(--accent); }
+  </style>
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("privacy");
+    document.getElementById("page-content").innerHTML = `
+      <div class="legal">
+        <div class="page-header" style="margin-bottom:36px">
+          <div>
+            <div class="eyebrow">Legal</div>
+            <div class="title" style="margin-top:8px">Privacy policy</div>
+            <div class="subtitle">Last updated ${new Date().toISOString().slice(0,10)}</div>
+          </div>
+        </div>
+        <div id="body"></div>
+      </div>
+    `;
+    const PRIVACY_HTML = `
+      <h3>1. Overview</h3>
+      <p>CardTax is designed to require as little personal data as possible. We do not need your Social Security Number, bank account, or government ID to calculate tax estimates.</p>
+
+      <h3>2. What we collect</h3>
+      <ul>
+        <li>Transaction data you enter: titles, sale prices, fees, dates, basis, grading, platform, acquisition method, notes.</li>
+        <li>Tax settings: year, filing status, state, city, classification, income estimate.</li>
+        <li>Card images you upload to Card Scanner.</li>
+        <li>Account info (future): email, display name. Passwords stored as salted hashes.</li>
+        <li>Imported CSVs: parsed into transactions; raw file is not retained.</li>
+        <li>Minimal server logs for security and debugging. No third-party analytics or ad trackers.</li>
+      </ul>
+
+      <h3>3. How we use information</h3>
+      <ul>
+        <li>Compute tax estimates and form previews.</li>
+        <li>Identify uploaded card photos via a third-party vision model.</li>
+        <li>Provide the features you request.</li>
+        <li>Maintain and improve the service.</li>
+        <li>Comply with applicable law.</li>
+      </ul>
+
+      <h3>4. What we do not do</h3>
+      <ul>
+        <li>We do not sell your personal information.</li>
+        <li>We do not share data with marketers, advertisers, or data brokers.</li>
+        <li>We do not train machine-learning models on your transaction data without explicit consent.</li>
+        <li>We do not transmit your data to the IRS. CardTax does not file returns.</li>
+      </ul>
+
+      <h3>5. Sharing and disclosure</h3>
+      <ul>
+        <li>Service providers (hosting, database, error tracking) under written agreements.</li>
+        <li>Vision API provider for Card Scanner image identification.</li>
+        <li>Legal compliance: subpoena, court order, or to protect rights, property, or safety.</li>
+        <li>Business transfer in a merger or acquisition, with notice.</li>
+        <li>With your explicit consent.</li>
+      </ul>
+
+      <h3>6. Card scanner data flow</h3>
+      <p>Photos are stored locally in your CardTax data directory and sent to a third-party vision model (default OpenAI) with a prompt asking for identification. Do not upload photos containing personally identifying information beyond the card itself.</p>
+
+      <h3>7. Security</h3>
+      <p>TLS in transit, encryption at rest for production databases, access controls, principle-of-least-privilege, and regular dependency updates.</p>
+
+      <h3>8. Retention and deletion</h3>
+      <p>Transaction data is retained for as long as your account is active and for up to seven years thereafter to align with IRS record-retention guidelines. Delete individual transactions or all transactions from Settings at any time.</p>
+
+      <h3>9. Your rights</h3>
+      <ul>
+        <li>Access the data we hold about you.</li>
+        <li>Correct inaccurate data.</li>
+        <li>Delete your data.</li>
+        <li>Portability: machine-readable export.</li>
+        <li>Object to or restrict certain processing.</li>
+        <li>Withdraw consent where applicable.</li>
+      </ul>
+      <p>To exercise rights: <a href="mailto:privacy@cardtax.app">privacy@cardtax.app</a>. We respond within 30 days.</p>
+
+      <h3>10. California (CCPA / CPRA)</h3>
+      <p>California residents have additional rights to know, delete, correct, opt out of sale or sharing, limit use of sensitive data, and non-discrimination. CardTax does not sell or share your personal information.</p>
+
+      <h3>11. European users (GDPR)</h3>
+      <p>Lawful bases: contract, legitimate interest, and consent. You have the right to lodge a complaint with your local data protection authority.</p>
+
+      <h3>12. Cookies</h3>
+      <p>Functional cookies / localStorage only (theme preference, login state). No advertising cookies or third-party analytics.</p>
+
+      <h3>13. Children</h3>
+      <p>CardTax is not intended for children under 13.</p>
+
+      <h3>14. Changes</h3>
+      <p>Material changes announced at least 30 days before they take effect.</p>
+
+      <h3>15. Contact</h3>
+      <p><a href="mailto:privacy@cardtax.app">privacy@cardtax.app</a></p>
+    `;
+    document.getElementById("body").innerHTML = PRIVACY_HTML;
+  </script>
+</body>
+</html>

@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transactions · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Card sale transactions and editing.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="Transactions">
+  <meta property="og:description" content="Card sale transactions and editing.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Transactions">
+  <meta name="twitter:description" content="Card sale transactions and editing.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("transactions");
+    const content = document.getElementById("page-content");
+    content.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="title">Transactions</div>
+          <div class="subtitle">All your sales with inline cost-basis editing.</div>
+        </div>
+        <div class="page-header-actions">
+          <a href="/scan" class="btn btn-secondary">Scan a card</a>
+          <a href="/upload" class="btn btn-secondary">Import CSV</a>
+          <button class="btn btn-primary" id="add-btn">New sale</button>
+        </div>
+      </div>
+
+      <div id="add-form" class="card" style="display:none;margin-bottom:24px">
+        <div class="card-title" style="margin-bottom:16px">New transaction</div>
+        <div class="grid grid-3">
+          <label class="field"><span class="field-label">Item title</span><input class="input" id="f-title" placeholder="2018 Topps Chrome Acuna RC PSA 10"></label>
+          <label class="field"><span class="field-label">Sale date</span><input type="date" class="input" id="f-sale-date"></label>
+          <label class="field"><span class="field-label">Sale price ($)</span><input type="number" step="0.01" class="input" id="f-sale-price"></label>
+          <label class="field"><span class="field-label">Platform</span>
+            <select class="select" id="f-platform">
+              <option value="manual">Manual</option><option value="ebay">eBay</option>
+              <option value="whatnot">Whatnot</option><option value="comc">COMC</option>
+            </select></label>
+          <label class="field"><span class="field-label">Platform fees ($)</span><input type="number" step="0.01" class="input" id="f-fees"></label>
+          <label class="field"><span class="field-label">Shipping you paid ($)</span><input type="number" step="0.01" class="input" id="f-ship"></label>
+        </div>
+
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+          <div class="eyebrow" style="margin-bottom:12px">Acquisition</div>
+          <div class="grid grid-3">
+            <label class="field"><span class="field-label">How did you acquire it?</span>
+              <select class="select" id="f-acq">
+                <option value="purchase">Purchase</option>
+                <option value="gift">Gift (§1015 carryover)</option>
+                <option value="inheritance">Inheritance (§1014 step-up)</option>
+                <option value="break_spot">Break spot allocation</option>
+                <option value="personal_collection">Personal collection</option>
+                <option value="donation">Donation to charity</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="acq-fields acq-purchase acq-personal_collection acq-other grid grid-3" style="margin-top:12px">
+            <label class="field"><span class="field-label">Purchase date</span><input type="date" class="input" id="f-buy-date"></label>
+            <label class="field"><span class="field-label">Purchase price ($)</span><input type="number" step="0.01" class="input" id="f-buy-price"></label>
+            <label class="field"><span class="field-label">Grading fees ($)</span><input type="number" step="0.01" class="input" id="f-grading"></label>
+          </div>
+
+          <div class="acq-fields acq-gift grid grid-3" style="margin-top:12px;display:none">
+            <label class="field"><span class="field-label">Donor's adjusted basis ($)</span><input type="number" step="0.01" class="input" id="f-donor-basis"></label>
+            <label class="field"><span class="field-label">FMV at gift ($)</span><input type="number" step="0.01" class="input" id="f-fmv-gift"></label>
+            <label class="field"><span class="field-label">Date of gift</span><input type="date" class="input" id="f-gift-date"></label>
+            <label class="field"><span class="field-label">Donor's original purchase date</span><input type="date" class="input" id="f-donor-start"></label>
+            <div class="note" style="grid-column:span 3">§1015 dual basis: gain measured against donor's basis; loss capped at FMV-at-gift. If proceeds fall between, no gain or loss.</div>
+          </div>
+
+          <div class="acq-fields acq-inheritance grid grid-3" style="margin-top:12px;display:none">
+            <label class="field"><span class="field-label">Date of decedent's death</span><input type="date" class="input" id="f-dod"></label>
+            <label class="field"><span class="field-label">FMV at death ($)</span><input type="number" step="0.01" class="input" id="f-fmv-death"></label>
+            <div class="note" style="grid-column:span 3">§1014: basis steps up to FMV at death. Inherited property is automatically long-term.</div>
+          </div>
+
+          <div class="acq-fields acq-break_spot grid grid-3" style="margin-top:12px;display:none">
+            <label class="field"><span class="field-label">Break spot price paid ($)</span><input type="number" step="0.01" class="input" id="f-spot"></label>
+            <label class="field"><span class="field-label">Total FMV of break cards ($)</span><input type="number" step="0.01" class="input" id="f-spot-total"></label>
+            <label class="field"><span class="field-label">Allocated basis for this card ($)</span><input type="number" step="0.01" class="input" id="f-buy-price-2"></label>
+            <label class="field"><span class="field-label">Date received</span><input type="date" class="input" id="f-buy-date-2"></label>
+            <div class="note" style="grid-column:span 3">Use the <a href="/tools">break allocator</a> to compute per-card basis.</div>
+          </div>
+
+          <div class="acq-fields acq-donation grid grid-3" style="margin-top:12px;display:none">
+            <label class="field"><span class="field-label">Donation date</span><input type="date" class="input" id="f-donation-date"></label>
+            <label class="field"><span class="field-label">FMV at donation ($)</span><input type="number" step="0.01" class="input" id="f-fmv-donation"></label>
+            <label class="field"><span class="field-label">Donee organization</span><input class="input" id="f-donee"></label>
+            <label class="field"><span class="field-label">Your original cost basis ($)</span><input type="number" step="0.01" class="input" id="f-don-basis"></label>
+            <label class="field"><span class="field-label">Original purchase date</span><input type="date" class="input" id="f-don-buy-date"></label>
+            <div class="checkbox-row" style="grid-column:span 3">
+              <input type="checkbox" id="f-unrelated" checked>
+              <label for="f-unrelated">Donee will sell the card (unrelated use — basis-only deduction)</label>
+            </div>
+            <div class="note" style="grid-column:span 3">LTCG property with related use: deduct FMV (30% AGI limit). Otherwise basis only. 5-year carryforward.</div>
+          </div>
+
+          <div class="acq-fields acq-personal_collection note note-warning" style="margin-top:12px;display:none">
+            IRC §165(c): losses on personal-use property are NOT deductible. Gains ARE still taxable.
+          </div>
+        </div>
+
+        <div style="margin-top:20px;display:flex;gap:8px">
+          <button class="btn btn-primary" id="save-btn">Save</button>
+          <button class="btn btn-ghost" id="cancel-btn">Cancel</button>
+        </div>
+      </div>
+
+      <div class="filterbar">
+        <div class="search">
+          <span class="search-icon">${ICONS.search}</span>
+          <input class="input" id="f-search" placeholder="Search items, platform, or amount">
+        </div>
+        <select class="select" id="f-year-filter">
+          <option value="">All years</option>
+        </select>
+        <select class="select" id="f-platform-filter">
+          <option value="">All platforms</option>
+          <option value="ebay">eBay</option>
+          <option value="whatnot">Whatnot</option>
+          <option value="comc">COMC</option>
+          <option value="manual">Manual</option>
+        </select>
+        <select class="select" id="f-gl-filter">
+          <option value="">All results</option>
+          <option value="gain">Gains only</option>
+          <option value="loss">Losses only</option>
+        </select>
+        <select class="select" id="f-hold-filter">
+          <option value="">All holding</option>
+          <option value="lt">Long-term</option>
+          <option value="st">Short-term</option>
+        </select>
+      </div>
+
+      <div class="card" style="padding:0">
+        <div style="overflow-x:auto">
+          <table class="table">
+            <thead><tr>
+              <th>Date</th>
+              <th>Item</th>
+              <th>Platform</th>
+              <th class="num">Sale</th>
+              <th class="num">Fees</th>
+              <th class="num">Net</th>
+              <th>Acquired</th>
+              <th class="num">Basis</th>
+              <th>Hold</th>
+              <th class="num">Gain / loss</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div id="empty-row" class="empty" style="display:none;border:0">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3h18v18H3z"/>
+              <path d="M3 9h18M9 21V9"/>
+            </svg>
+          </div>
+          <div class="empty-title">No transactions match those filters</div>
+          <div class="empty-sub">Try clearing the search bar, picking a different year, or import more sales to fill out this view.</div>
+          <div class="empty-ctas">
+            <a href="/upload" class="btn btn-primary">Import CSV</a>
+            <a href="/connections" class="btn btn-secondary">Connect eBay</a>
+          </div>
+        </div>
+        <div class="pagination" id="pager" style="display:none">
+          <span id="page-info"></span>
+          <div class="btn-group">
+            <button class="btn btn-secondary btn-sm" id="prev">Previous</button>
+            <button class="btn btn-secondary btn-sm" id="next">Next</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    let rows = [];
+    let page = 1;
+    const PER_PAGE = 25;
+
+    function filtered() {
+      const q = (document.getElementById("f-search").value || "").toLowerCase().trim();
+      const yr = document.getElementById("f-year-filter").value;
+      const pf = document.getElementById("f-platform-filter").value;
+      const gl = document.getElementById("f-gl-filter").value;
+      const hf = document.getElementById("f-hold-filter").value;
+      return rows.filter(r => {
+        if (q) {
+          const hay = (
+            (r.item_title || "") + " " +
+            (r.platform_source || "") + " " +
+            (r.sale_price != null ? r.sale_price.toFixed(2) : "")
+          ).toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        if (yr && r.sale_date && !r.sale_date.startsWith(yr)) return false;
+        if (pf && r.platform_source !== pf) return false;
+        if (gl === "gain" && r.gain_loss <= 0) return false;
+        if (gl === "loss" && r.gain_loss >= 0) return false;
+        if (hf === "lt" && !r.is_long_term) return false;
+        if (hf === "st" && r.is_long_term) return false;
+        return true;
+      });
+    }
+
+    function populateYearFilter() {
+      const sel = document.getElementById("f-year-filter");
+      const years = new Set();
+      rows.forEach(r => { if (r.sale_date) years.add(r.sale_date.slice(0, 4)); });
+      const sorted = Array.from(years).sort((a, b) => b.localeCompare(a));
+      const currentVal = sel.value;
+      sel.innerHTML = `<option value="">All years</option>` +
+        sorted.map(y => `<option value="${y}">${y}</option>`).join("");
+      // Default to current calendar year if it has rows, otherwise keep "all".
+      const thisYear = String(new Date().getFullYear());
+      if (currentVal) sel.value = currentVal;
+      else if (sorted.includes(thisYear)) sel.value = thisYear;
+    }
+
+    function renderRow(t) {
+      const hold = t.holding_period_days == null
+        ? `<span class="muted">—</span>`
+        : `<span class="badge ${t.is_long_term ? "" : "badge-warning"}">${t.is_long_term ? "LT" : "ST"} · ${t.holding_period_days}d</span>`;
+      const acq = (t.acquisition_type && t.acquisition_type !== "purchase")
+        ? `<div class="tertiary" style="font-size:11.5px;margin-top:3px">${t.acquisition_type.replace(/_/g," ")}</div>`
+        : "";
+      const titleCell = t.image_path
+        ? `<div style="display:flex;align-items:center;gap:10px"><img src="${t.image_path}" style="width:32px;height:44px;object-fit:cover;border-radius:4px;border:1px solid var(--border)"><div><input class="inline-edit" data-field="item_title" value="${(t.item_title||"").replace(/"/g,"&quot;")}">${acq}</div></div>`
+        : `<div><input class="inline-edit" data-field="item_title" value="${(t.item_title||"").replace(/"/g,"&quot;")}">${acq}</div>`;
+      return `
+        <tr data-id="${t.id}">
+          <td class="muted"><input class="inline-edit" type="date" data-field="sale_date" value="${t.sale_date||""}"></td>
+          <td>${titleCell}</td>
+          <td><span class="badge">${t.platform_source || "manual"}</span></td>
+          <td class="num"><input class="inline-edit num" type="number" step="0.01" data-field="sale_price" value="${t.sale_price}"></td>
+          <td class="num"><input class="inline-edit num" type="number" step="0.01" data-field="platform_fees" value="${t.platform_fees}"></td>
+          <td class="num">${fmt$(t.net_proceeds)}</td>
+          <td class="muted"><input class="inline-edit" type="date" data-field="purchase_date" value="${t.purchase_date||""}"></td>
+          <td class="num"><input class="inline-edit num" type="number" step="0.01" data-field="purchase_price" value="${t.purchase_price}"></td>
+          <td>${hold}</td>
+          <td class="num ${gainCls(t.gain_loss)}">${fmt$(t.gain_loss)}</td>
+          <td><button class="btn btn-ghost btn-sm delete-btn" title="Delete">×</button></td>
+        </tr>
+      `;
+    }
+
+    function render() {
+      const f = filtered();
+      const totalPages = Math.max(1, Math.ceil(f.length / PER_PAGE));
+      if (page > totalPages) page = totalPages;
+      const start = (page - 1) * PER_PAGE;
+      const slice = f.slice(start, start + PER_PAGE);
+
+      const tbody = document.getElementById("tbody");
+      const empty = document.getElementById("empty-row");
+      const pager = document.getElementById("pager");
+
+      if (!f.length) {
+        tbody.innerHTML = "";
+        empty.style.display = "block";
+        pager.style.display = "none";
+        return;
+      }
+      empty.style.display = "none";
+      tbody.innerHTML = slice.map(renderRow).join("");
+      tbody.querySelectorAll(".inline-edit").forEach(i => i.addEventListener("blur", onEdit));
+      tbody.querySelectorAll(".delete-btn").forEach(b => b.addEventListener("click", onDelete));
+
+      if (f.length > PER_PAGE) {
+        pager.style.display = "flex";
+        document.getElementById("page-info").textContent =
+          `${start + 1}–${Math.min(start + PER_PAGE, f.length)} of ${f.length}`;
+        document.getElementById("prev").disabled = page === 1;
+        document.getElementById("next").disabled = page === totalPages;
+      } else {
+        pager.style.display = "none";
+      }
+    }
+
+    async function load() {
+      rows = await api("GET", "/api/transactions");
+      populateYearFilter();
+      render();
+    }
+
+    async function onEdit(e) {
+      const tr = e.target.closest("tr");
+      const id = tr.dataset.id;
+      const field = e.target.dataset.field;
+      let value = e.target.value;
+      const body = {};
+      if (field === "item_title") body[field] = value;
+      else if (field === "sale_date" || field === "purchase_date") body[field] = value || null;
+      else body[field] = parseFloat(value) || 0;
+      try {
+        const u = await api("PATCH", `/api/transactions/${id}`, body);
+        const idx = rows.findIndex(r => r.id === u.id);
+        if (idx >= 0) rows[idx] = u;
+        render();
+      } catch (err) { toast(err.message, "error"); }
+    }
+    async function onDelete(e) {
+      const tr = e.target.closest("tr");
+      const ok = await confirmModal({
+        title: "Delete this transaction?",
+        message: "We'll remove it from your records. This can't be undone — only restored by re-importing.",
+        confirmLabel: "Delete",
+        danger: true,
+      });
+      if (!ok) return;
+      try {
+        await api("DELETE", `/api/transactions/${tr.dataset.id}`);
+        toast("Transaction deleted", "success");
+        load();
+      } catch (err) {
+        toast(apiErrorMessage(err, "Delete failed"), "error");
+      }
+    }
+
+    function updateAcqVisibility() {
+      const v = document.getElementById("f-acq").value;
+      document.querySelectorAll(".acq-fields").forEach(el => {
+        el.style.display = el.classList.contains(`acq-${v}`) ? "" : "none";
+      });
+    }
+    document.getElementById("add-btn").addEventListener("click", () => {
+      const f = document.getElementById("add-form");
+      f.style.display = f.style.display === "none" ? "block" : "none";
+      if (f.style.display === "block") {
+        document.getElementById("f-sale-date").value = new Date().toISOString().slice(0,10);
+        updateAcqVisibility();
+      }
+    });
+    document.getElementById("f-acq").addEventListener("change", updateAcqVisibility);
+    document.getElementById("cancel-btn").addEventListener("click", () => {
+      document.getElementById("add-form").style.display = "none";
+    });
+    document.getElementById("save-btn").addEventListener("click", async () => {
+      const atype = document.getElementById("f-acq").value;
+      const body = {
+        item_title: document.getElementById("f-title").value || "Untitled",
+        sale_date: document.getElementById("f-sale-date").value,
+        sale_price: parseFloat(document.getElementById("f-sale-price").value) || 0,
+        platform_source: document.getElementById("f-platform").value,
+        platform_fees: parseFloat(document.getElementById("f-fees").value) || 0,
+        shipping_cost_out: parseFloat(document.getElementById("f-ship").value) || 0,
+        acquisition_type: atype,
+      };
+      if (atype === "purchase" || atype === "personal_collection" || atype === "other") {
+        body.purchase_date = document.getElementById("f-buy-date").value || null;
+        body.purchase_price = parseFloat(document.getElementById("f-buy-price").value) || 0;
+        body.grading_fees = parseFloat(document.getElementById("f-grading").value) || 0;
+      } else if (atype === "gift") {
+        body.donor_basis = parseFloat(document.getElementById("f-donor-basis").value) || 0;
+        body.fmv_at_gift = parseFloat(document.getElementById("f-fmv-gift").value) || 0;
+        body.gift_date = document.getElementById("f-gift-date").value || null;
+        body.donor_holding_period_start = document.getElementById("f-donor-start").value || null;
+        body.purchase_date = body.gift_date;
+      } else if (atype === "inheritance") {
+        body.date_of_death = document.getElementById("f-dod").value || null;
+        body.fmv_at_death = parseFloat(document.getElementById("f-fmv-death").value) || 0;
+        body.purchase_date = body.date_of_death;
+      } else if (atype === "break_spot") {
+        body.break_spot_price = parseFloat(document.getElementById("f-spot").value) || 0;
+        body.break_total_fmv = parseFloat(document.getElementById("f-spot-total").value) || 0;
+        body.purchase_price = parseFloat(document.getElementById("f-buy-price-2").value) || 0;
+        body.purchase_date = document.getElementById("f-buy-date-2").value || null;
+      } else if (atype === "donation") {
+        body.donation_date = document.getElementById("f-donation-date").value || null;
+        body.fmv_at_donation = parseFloat(document.getElementById("f-fmv-donation").value) || 0;
+        body.donee_organization = document.getElementById("f-donee").value || "";
+        body.donee_unrelated_use = document.getElementById("f-unrelated").checked;
+        body.purchase_price = parseFloat(document.getElementById("f-don-basis").value) || 0;
+        body.purchase_date = document.getElementById("f-don-buy-date").value || null;
+        body.sale_price = 0;
+      }
+      try {
+        await api("POST", "/api/transactions", body);
+        toast("Saved", "success");
+        document.getElementById("add-form").style.display = "none";
+        load();
+      } catch (err) { toast(err.message, "error"); }
+    });
+
+    ["f-search","f-year-filter","f-platform-filter","f-gl-filter","f-hold-filter"].forEach(id => {
+      document.getElementById(id).addEventListener("input", () => { page = 1; render(); });
+      document.getElementById(id).addEventListener("change", () => { page = 1; render(); });
+    });
+    document.getElementById("prev").addEventListener("click", () => { page--; render(); });
+    document.getElementById("next").addEventListener("click", () => { page++; render(); });
+
+    load();
+  </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.env
+*.db
+*.sqlite3
+node_modules/
+.DS_Store
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+cardtax.db
+data/uploads/

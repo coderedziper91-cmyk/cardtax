@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create account · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Free CardTax account — track card sales taxes from eBay, Whatnot, and COMC.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="Start a CardTax account">
+  <meta property="og:description" content="Free CardTax account — track card sales taxes from eBay, Whatnot, and COMC.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Start a CardTax account">
+  <meta name="twitter:description" content="Free CardTax account — track card sales taxes from eBay, Whatnot, and COMC.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div class="auth-shell">
+    <header class="auth-topbar">
+      <a href="/" class="brand">CardTax</a>
+      <a href="/login" class="muted" style="font-size:13px">Already have an account? Sign in →</a>
+    </header>
+
+    <main class="auth-main">
+      <div class="auth-card">
+        <h1 class="auth-title">Create your account</h1>
+        <p class="auth-sub">Track every card sale and your federal, state, and local tax estimate in one place.</p>
+
+        <div id="error-banner" class="note note-danger" style="display:none;margin-bottom:18px"></div>
+
+        <button id="google-btn" class="btn btn-secondary auth-google" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.4-1.6 4-5.5 4-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.9 1.5l2.6-2.6C16.9 3.2 14.7 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12s4.4 9.8 9.8 9.8c5.7 0 9.4-4 9.4-9.6 0-.6-.1-1.1-.2-1.6H12z"/>
+          </svg>
+          Sign up with Google
+        </button>
+        <div id="google-note" class="muted" style="font-size:12px;margin-top:6px;display:none">
+          Google sign-in needs <span class="mono">GOOGLE_CLIENT_ID</span> + <span class="mono">GOOGLE_CLIENT_SECRET</span> in your env.
+        </div>
+
+        <div class="auth-divider"><span>or</span></div>
+
+        <form id="signup-form" autocomplete="on" novalidate>
+          <label class="field" style="margin-bottom:14px">
+            <span class="field-label">Email</span>
+            <input type="email" id="email" class="input" autocomplete="email" required>
+            <span class="field-error" id="err-email"></span>
+          </label>
+          <label class="field" style="margin-bottom:14px">
+            <span class="field-label">Password</span>
+            <input type="password" id="password" class="input" autocomplete="new-password" minlength="8" required>
+            <div class="pw-strength" id="pw-strength"><span class="pw-strength-bar"></span><span class="pw-strength-bar"></span><span class="pw-strength-bar"></span></div>
+            <span class="pw-strength-label" id="pw-strength-label"></span>
+            <span class="field-error" id="err-password"></span>
+          </label>
+          <label class="field" style="margin-bottom:18px">
+            <span class="field-label">Confirm password</span>
+            <input type="password" id="password2" class="input" autocomplete="new-password" minlength="8" required>
+            <span class="field-error" id="err-password2"></span>
+          </label>
+          <button class="btn btn-primary" id="submit" style="width:100%" type="submit">Create account</button>
+        </form>
+
+        <div class="auth-foot muted">
+          By signing up, you agree to our <a href="/terms">terms</a> and <a href="/privacy">privacy policy</a>.
+        </div>
+      </div>
+    </main>
+
+    <footer class="auth-footer muted">
+      <span>© <span id="year"></span> CardTax</span>
+      <span><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a> · <a href="/pricing">Pricing</a></span>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const saved = localStorage.getItem("cardtax-theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (saved === "dark" || (saved !== "light" && prefersDark)) {
+        document.documentElement.classList.add("dark");
+      }
+    })();
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // Funnel: signup page view = sign_up_start
+    if (window.cardtaxFunnel) window.cardtaxFunnel.signUpStart({ method: "password" });
+
+    function showError(msg) {
+      const b = document.getElementById("error-banner");
+      b.textContent = msg;
+      b.style.display = "block";
+    }
+    function clearError() { document.getElementById("error-banner").style.display = "none"; }
+
+    fetch("/api/auth/google/configured").then(r => r.json()).then(d => {
+      const btn = document.getElementById("google-btn");
+      const note = document.getElementById("google-note");
+      if (!d.configured) {
+        btn.disabled = true;
+        btn.style.opacity = "0.6";
+        btn.style.cursor = "not-allowed";
+        note.style.display = "block";
+      }
+    }).catch(() => {});
+
+    document.getElementById("google-btn").addEventListener("click", () => {
+      window.location.href = "/auth/google/start";
+    });
+
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const $email = document.getElementById("email");
+    const $pw = document.getElementById("password");
+    const $pw2 = document.getElementById("password2");
+    const $eErr = document.getElementById("err-email");
+    const $pErr = document.getElementById("err-password");
+    const $p2Err = document.getElementById("err-password2");
+    const $strength = document.getElementById("pw-strength");
+    const $strengthLabel = document.getElementById("pw-strength-label");
+
+    function pwPolicyIssue(pw) {
+      if (pw.length < 8) return "Password must be at least 8 characters.";
+      if (!/[A-Z]/.test(pw)) return "Add at least one uppercase letter.";
+      if (!/[a-z]/.test(pw)) return "Add at least one lowercase letter.";
+      if (!/\d/.test(pw)) return "Add at least one number.";
+      return "";
+    }
+    function scorePw(pw) {
+      let s = 0;
+      if (pw.length >= 8) s++;
+      if (pw.length >= 12) s++;
+      if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) s++;
+      if (/\d/.test(pw)) s++;
+      if (/[^A-Za-z0-9]/.test(pw)) s++;
+      return Math.min(3, Math.floor(s / 1.7));
+    }
+    function paintStrength() {
+      const pw = $pw.value;
+      $strength.classList.remove("weak", "medium", "strong");
+      if (!pw) { $strengthLabel.textContent = ""; return; }
+      const lvl = scorePw(pw);
+      const cls = lvl <= 1 ? "weak" : lvl === 2 ? "medium" : "strong";
+      $strength.classList.add(cls);
+      $strengthLabel.textContent = `Strength: ${cls}`;
+    }
+    function validate() {
+      let ok = true;
+      const email = $email.value.trim();
+      if (email && !EMAIL_RE.test(email)) {
+        $email.classList.add("invalid"); $eErr.textContent = "Enter a valid email address.";
+        ok = false;
+      } else { $email.classList.remove("invalid"); $eErr.textContent = ""; }
+
+      const pw = $pw.value;
+      const pwIssue = pw ? pwPolicyIssue(pw) : "";
+      if (pwIssue) {
+        $pw.classList.add("invalid"); $pErr.textContent = pwIssue;
+        ok = false;
+      } else { $pw.classList.remove("invalid"); $pErr.textContent = ""; }
+
+      const pw2 = $pw2.value;
+      if (pw && pw2 && pw !== pw2) {
+        $pw2.classList.add("invalid"); $p2Err.textContent = "Passwords do not match.";
+        ok = false;
+      } else { $pw2.classList.remove("invalid"); $p2Err.textContent = ""; }
+
+      return ok;
+    }
+
+    $email.addEventListener("input", validate);
+    $pw.addEventListener("input", () => { paintStrength(); validate(); });
+    $pw2.addEventListener("input", validate);
+
+    document.getElementById("signup-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      clearError();
+      const email = $email.value.trim();
+      const password = $pw.value;
+      const password2 = $pw2.value;
+      if (!email || !EMAIL_RE.test(email)) { showError("Enter a valid email address."); $email.classList.add("invalid"); return; }
+      const pwIssue = pwPolicyIssue(password);
+      if (pwIssue) { showError(pwIssue); return; }
+      if (password !== password2) { showError("Passwords do not match."); return; }
+      const btn = document.getElementById("submit");
+      const restore = setBtnLoading(btn, "Creating account…");
+      try {
+        const r = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const body = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(body.detail || "Sign-up failed.");
+        if (window.cardtaxFunnel) window.cardtaxFunnel.signUpComplete({ method: "password" });
+        window.location.href = body.onboarded ? "/dashboard" : "/onboarding";
+      } catch (err) {
+        showError(err.message || "Sign-up failed.");
+        restore();
+      }
+    });
+  </script>
+</body>
+</html>

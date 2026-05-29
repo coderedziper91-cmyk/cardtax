@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Get your CardTax account set up in three steps.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="Welcome">
+  <meta property="og:description" content="Get your CardTax account set up in three steps.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Welcome">
+  <meta name="twitter:description" content="Get your CardTax account set up in three steps.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    /* Onboarding-only layout — calmer, slightly narrower than the app shell */
+    .ob-shell      { min-height: 100vh; display: flex; flex-direction: column; background: var(--paper); }
+    .ob-topbar     { border-bottom: 1px solid var(--rule); padding: 18px 40px;
+                      display: flex; justify-content: space-between; align-items: center; }
+    .ob-skip       { color: var(--ink-mute); font-size: 13px; text-decoration: underline;
+                      text-underline-offset: 2px; background: none; border: none;
+                      cursor: pointer; font-family: inherit; }
+    .ob-skip:hover { color: var(--ink); }
+    .ob-main       { flex: 1; display: flex; justify-content: center; padding: 56px 24px 80px; }
+    .ob-wrap       { width: 100%; max-width: 640px; }
+    .ob-progress   { display: flex; align-items: center; gap: 10px; margin-bottom: 36px; }
+    .ob-dot        { flex: 1; height: 2px; background: var(--rule); border-radius: 1px; transition: background 0.2s; }
+    .ob-dot.active { background: var(--ink); }
+    .ob-dot.done   { background: var(--accent); }
+    .ob-step-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.12em;
+                      text-transform: uppercase; color: var(--ink-mute); margin-bottom: 8px; }
+    .ob-title      { font-family: var(--font-display); font-size: 32px; font-weight: 500;
+                      letter-spacing: -0.02em; color: var(--ink); margin: 0 0 10px; line-height: 1.15; }
+    .ob-sub        { color: var(--ink-mute); font-size: 14.5px; line-height: 1.55;
+                      max-width: 56ch; margin: 0 0 28px; }
+    .ob-body       { background: var(--paper); border: 1px solid var(--rule);
+                      border-radius: var(--radius); padding: 32px; }
+    .ob-feature    { padding: 16px 0; border-bottom: 1px solid var(--rule); display: flex; gap: 14px; }
+    .ob-feature:last-child { border-bottom: none; }
+    .ob-feature-icon { width: 28px; height: 28px; flex-shrink: 0; color: var(--accent);
+                       display: flex; align-items: center; justify-content: center; }
+    .ob-feature-icon svg { width: 22px; height: 22px; stroke-width: 1.5; }
+    .ob-feature-title { font-weight: 500; color: var(--ink); margin-bottom: 2px; font-size: 14.5px; }
+    .ob-feature-sub   { color: var(--ink-mute); font-size: 13px; line-height: 1.55; }
+    .ob-actions    { display: flex; justify-content: space-between; align-items: center;
+                      margin-top: 28px; gap: 16px; }
+    .ob-back       { background: none; border: none; color: var(--ink-mute); font: inherit;
+                      cursor: pointer; padding: 6px 0; font-size: 13px; }
+    .ob-back:hover { color: var(--ink); }
+    .ob-choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    .ob-choice     { background: var(--paper); border: 1px solid var(--rule-strong);
+                      border-radius: var(--radius); padding: 18px 16px; cursor: pointer;
+                      text-align: left; font: inherit; color: var(--ink); transition: all 0.12s; }
+    .ob-choice:hover { border-color: var(--ink); background: var(--paper-alt); }
+    .ob-choice.selected { border-color: var(--accent); background: var(--accent-soft); }
+    .ob-choice-title { font-weight: 500; margin-bottom: 4px; }
+    .ob-choice-sub   { font-size: 12.5px; color: var(--ink-mute); line-height: 1.5; }
+    .ob-kpis       { display: grid; grid-template-columns: repeat(2, 1fr);
+                      border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+                      margin: 12px 0 18px; }
+    .ob-kpi        { padding: 18px 18px; border-left: 1px solid var(--rule); }
+    .ob-kpi:first-child, .ob-kpi:nth-child(3) { border-left: none; padding-left: 0; }
+    .ob-kpi:nth-child(3), .ob-kpi:nth-child(4) { border-top: 1px solid var(--rule); }
+    .ob-kpi-label  { font-size: 10.5px; font-weight: 600; letter-spacing: 0.12em;
+                      text-transform: uppercase; color: var(--ink-mute); }
+    .ob-kpi-value  { font-family: var(--font-display); font-size: 24px; font-weight: 500;
+                      letter-spacing: -0.02em; margin-top: 8px;
+                      font-variant-numeric: tabular-nums oldstyle-nums; }
+    @media (max-width: 540px) {
+      .ob-topbar { padding: 14px 20px; }
+      .ob-main { padding: 32px 16px 56px; }
+      .ob-body { padding: 24px 20px; }
+      .ob-title { font-size: 26px; }
+      .ob-choice-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ob-shell">
+    <header class="ob-topbar">
+      <a href="/" class="brand">CardTax</a>
+      <button type="button" class="ob-skip" id="skip-btn">Skip onboarding →</button>
+    </header>
+
+    <main class="ob-main">
+      <div class="ob-wrap">
+        <div class="ob-progress" id="progress"></div>
+
+        <div id="step-1" class="ob-step">
+          <div class="ob-step-label">Step 1 of 4 · Welcome</div>
+          <h1 class="ob-title">Welcome to CardTax.</h1>
+          <p class="ob-sub">
+            CardTax tracks every card you sell across every marketplace and turns it into a
+            real federal, state, and local tax estimate — plus the IRS forms you'll need to file.
+            Here's what you can do.
+          </p>
+          <div class="ob-body">
+            <div class="ob-feature">
+              <div class="ob-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+              <div>
+                <div class="ob-feature-title">Import sales from anywhere</div>
+                <div class="ob-feature-sub">eBay (auto-sync), Whatnot, COMC, MySlabs, TCGplayer, Mercari — or upload a CSV.</div>
+              </div>
+            </div>
+            <div class="ob-feature">
+              <div class="ob-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 6-6"/></svg></div>
+              <div>
+                <div class="ob-feature-title">Live tax estimate</div>
+                <div class="ob-feature-sub">Federal, NIIT, state, local, AMT, SE tax — recomputed every time you add a sale.</div>
+              </div>
+            </div>
+            <div class="ob-feature">
+              <div class="ob-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+              <div>
+                <div class="ob-feature-title">Filing-ready forms</div>
+                <div class="ob-feature-sub">Generate Form 8949, Schedule D, and Schedule C as professional PDFs for your CPA.</div>
+              </div>
+            </div>
+          </div>
+          <div class="ob-actions">
+            <span></span>
+            <button class="btn btn-primary" data-next="2">Get started →</button>
+          </div>
+        </div>
+
+        <div id="step-2" class="ob-step" style="display:none">
+          <div class="ob-step-label">Step 2 of 4 · Your tax profile</div>
+          <h1 class="ob-title">A few quick details.</h1>
+          <p class="ob-sub">These drive every tax calculation. You can change them anytime in Settings.</p>
+          <div class="ob-body">
+            <div class="grid grid-2">
+              <label class="field"><span class="field-label">Filing status</span>
+                <select id="filing_status" class="select">
+                  <option value="single">Single</option>
+                  <option value="mfj">Married filing jointly</option>
+                  <option value="mfs">Married filing separately</option>
+                  <option value="hoh">Head of household</option>
+                </select></label>
+              <label class="field"><span class="field-label">State</span>
+                <select id="state" class="select"><option value="">— select —</option></select></label>
+              <label class="field"><span class="field-label">Other ordinary income ($)</span>
+                <input type="number" step="100" id="ordinary_income_estimate" class="input" placeholder="0">
+                <span class="field-help">Your W-2 / 1099 income from non-card sources.</span></label>
+              <label class="field"><span class="field-label">Tax year</span>
+                <select id="tax_year" class="select">
+                  <option value="2024">2024</option>
+                  <option value="2025" selected>2025</option>
+                  <option value="2026">2026</option>
+                </select></label>
+            </div>
+            <div style="margin-top:18px">
+              <div class="field-label" style="display:block;font-size:11.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-mute);margin-bottom:10px">How do you sell?</div>
+              <div class="ob-choice-grid">
+                <button type="button" class="ob-choice" data-cls="hobby">
+                  <div class="ob-choice-title">Hobby</div>
+                  <div class="ob-choice-sub">A handful of cards a year. Income on Schedule 1; no expenses.</div>
+                </button>
+                <button type="button" class="ob-choice" data-cls="investor">
+                  <div class="ob-choice-title">Investor</div>
+                  <div class="ob-choice-sub">Buying and selling for gains. Schedule D · 28% collectibles cap.</div>
+                </button>
+                <button type="button" class="ob-choice" data-cls="dealer">
+                  <div class="ob-choice-title">Dealer / Business</div>
+                  <div class="ob-choice-sub">It's a business. Schedule C · all expenses · SE tax.</div>
+                </button>
+                <button type="button" class="ob-choice" data-cls="">
+                  <div class="ob-choice-title">Not sure</div>
+                  <div class="ob-choice-sub">We'll default to Investor — you can take the quiz later.</div>
+                </button>
+              </div>
+            </div>
+            <div id="step2-err" class="note note-danger" style="display:none;margin-top:12px"></div>
+          </div>
+          <div class="ob-actions">
+            <button class="ob-back" data-next="1">← Back</button>
+            <button class="btn btn-primary" id="save-settings" data-next="3">Save and continue →</button>
+          </div>
+        </div>
+
+        <div id="step-3" class="ob-step" style="display:none">
+          <div class="ob-step-label">Step 3 of 4 · Add your sales</div>
+          <h1 class="ob-title">Bring in your sales.</h1>
+          <p class="ob-sub">Connect a marketplace for live sync, or upload a CSV. You can also skip and add sales manually later.</p>
+          <div class="ob-body">
+            <div class="ob-feature">
+              <div class="ob-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></div>
+              <div style="flex:1">
+                <div class="ob-feature-title">Connect a marketplace</div>
+                <div class="ob-feature-sub" style="margin-bottom:10px">eBay syncs automatically. Whatnot, COMC, MySlabs, TCGplayer, Mercari support guided CSV imports.</div>
+                <a href="/connections?from=onboarding" class="btn btn-secondary btn-sm">Open Connections</a>
+              </div>
+            </div>
+            <div class="ob-feature">
+              <div class="ob-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg></div>
+              <div style="flex:1">
+                <div class="ob-feature-title">Upload a CSV</div>
+                <div class="ob-feature-sub" style="margin-bottom:10px">We auto-detect eBay, Whatnot, COMC, MySlabs, TCGplayer, and Mercari exports.</div>
+                <a href="/upload?from=onboarding" class="btn btn-secondary btn-sm">Open Importer</a>
+              </div>
+            </div>
+            <div class="ob-feature">
+              <div class="ob-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              <div style="flex:1">
+                <div class="ob-feature-title">Add manually</div>
+                <div class="ob-feature-sub" style="margin-bottom:10px">Enter one or two sales by hand — useful for testing the calculation.</div>
+                <a href="/transactions?from=onboarding" class="btn btn-secondary btn-sm">Open Transactions</a>
+              </div>
+            </div>
+          </div>
+          <div class="ob-actions">
+            <button class="ob-back" data-next="2">← Back</button>
+            <button class="btn btn-primary" data-next="4">Skip for now →</button>
+          </div>
+        </div>
+
+        <div id="step-4" class="ob-step" style="display:none">
+          <div class="ob-step-label">Step 4 of 4 · Your first estimate</div>
+          <h1 class="ob-title">You're all set.</h1>
+          <p class="ob-sub">Here's a snapshot of where you stand right now. Add sales any time — the numbers update live.</p>
+          <div class="ob-body">
+            <div class="ob-kpis" id="ob-kpis">
+              <div class="ob-kpi"><div class="ob-kpi-label">Net gain/loss</div><div class="ob-kpi-value mono" id="kpi-net">—</div></div>
+              <div class="ob-kpi"><div class="ob-kpi-label">Federal estimate</div><div class="ob-kpi-value mono" id="kpi-fed">—</div></div>
+              <div class="ob-kpi"><div class="ob-kpi-label">State + local</div><div class="ob-kpi-value mono" id="kpi-state">—</div></div>
+              <div class="ob-kpi"><div class="ob-kpi-label">Total estimated</div><div class="ob-kpi-value mono" id="kpi-total">—</div></div>
+            </div>
+            <div class="note" id="ob-summary-note" style="font-size:13px">
+              <strong>Tip:</strong> Connect a marketplace for the most accurate numbers. The estimate updates the moment a new sale lands.
+            </div>
+          </div>
+          <div class="ob-actions">
+            <button class="ob-back" data-next="3">← Back</button>
+            <button class="btn btn-primary" id="finish-btn">Go to dashboard →</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/shared.js"></script>
+  <script>
+    (function () {
+      const saved = localStorage.getItem("cardtax-theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (saved === "dark" || (saved !== "light" && prefersDark)) {
+        document.documentElement.classList.add("dark");
+      }
+    })();
+
+    // Funnel: onboarding page view = onboarding_start (once per session)
+    if (window.cardtaxFunnel) window.cardtaxFunnel.onboardingStart();
+
+    const TOTAL_STEPS = 4;
+    let currentStep = 1;
+    let selectedClassification = "investor";
+
+    function renderProgress() {
+      const wrap = document.getElementById("progress");
+      const dots = [];
+      for (let i = 1; i <= TOTAL_STEPS; i++) {
+        const cls = i < currentStep ? "done" : (i === currentStep ? "active" : "");
+        dots.push(`<div class="ob-dot ${cls}"></div>`);
+      }
+      wrap.innerHTML = dots.join("");
+    }
+
+    function showStep(n) {
+      currentStep = n;
+      for (let i = 1; i <= TOTAL_STEPS; i++) {
+        document.getElementById("step-" + i).style.display = i === n ? "block" : "none";
+      }
+      renderProgress();
+      if (n === 4) loadSummary();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    document.querySelectorAll("[data-next]").forEach(el => {
+      el.addEventListener("click", e => {
+        const target = parseInt(el.dataset.next, 10);
+        if (el.id === "save-settings") {
+          if (!saveSettings()) return;  // saveSettings advances when async resolves
+          return;
+        }
+        showStep(target);
+      });
+    });
+
+    document.querySelectorAll(".ob-choice").forEach(b => {
+      b.addEventListener("click", () => {
+        document.querySelectorAll(".ob-choice").forEach(x => x.classList.remove("selected"));
+        b.classList.add("selected");
+        selectedClassification = b.dataset.cls || "investor";
+      });
+    });
+
+    async function loadCurrentSettings() {
+      try {
+        const s = await api("GET", "/api/settings");
+        document.getElementById("filing_status").value = s.filing_status || "single";
+        document.getElementById("ordinary_income_estimate").value = s.ordinary_income_estimate || "";
+        document.getElementById("tax_year").value = String(s.tax_year || 2025);
+        // Highlight the matching classification card up front
+        const cls = s.classification || "investor";
+        selectedClassification = cls;
+        document.querySelectorAll(".ob-choice").forEach(b => {
+          if (b.dataset.cls === cls) b.classList.add("selected");
+        });
+        // Load states
+        const sd = await fetch("/api/states").then(r => r.json());
+        const sel = document.getElementById("state");
+        sel.innerHTML = '<option value="">— select —</option>' +
+          (sd.states || []).map(st => `<option value="${st.code}">${st.code} — ${st.name}</option>`).join("");
+        sel.value = s.state || "";
+      } catch {}
+    }
+
+    async function saveSettings() {
+      const err = document.getElementById("step2-err");
+      err.style.display = "none";
+      const btn = document.getElementById("save-settings");
+      btn.disabled = true; btn.textContent = "Saving…";
+      try {
+        const cur = await api("GET", "/api/settings");
+        const body = {
+          tax_year: parseInt(document.getElementById("tax_year").value, 10),
+          filing_status: document.getElementById("filing_status").value,
+          state: document.getElementById("state").value || "",
+          city: cur.city || "",
+          ordinary_income_estimate: parseFloat(document.getElementById("ordinary_income_estimate").value) || 0,
+          classification: selectedClassification,
+          lot_method: cur.lot_method || "fifo",
+          prior_year_tax: cur.prior_year_tax || 0,
+          prior_year_agi: cur.prior_year_agi || 0,
+          withholding_paid: cur.withholding_paid || 0,
+          is_kiddie_filer: cur.is_kiddie_filer || false,
+          parent_marginal_rate: cur.parent_marginal_rate || 0.22,
+          nol_carryforward: cur.nol_carryforward || 0,
+        };
+        await api("PUT", "/api/settings", body);
+        showStep(3);
+      } catch (e) {
+        err.textContent = apiErrorMessage(e, "Could not save settings.");
+        err.style.display = "block";
+      } finally {
+        btn.disabled = false; btn.textContent = "Save and continue →";
+      }
+      return true;
+    }
+
+    async function loadSummary() {
+      try {
+        const d = await api("GET", "/api/dashboard");
+        const s = d.summary;
+        document.getElementById("kpi-net").textContent = fmt$0(s.total_net);
+        document.getElementById("kpi-net").className = "ob-kpi-value mono " + gainCls(s.total_net);
+        document.getElementById("kpi-fed").textContent = fmt$0(s.federal_income_tax + s.niit);
+        document.getElementById("kpi-state").textContent = fmt$0(s.state_tax + ((d.local_detail?.total_local_tax) || 0));
+        document.getElementById("kpi-total").textContent = fmt$0(s.estimated_total_tax);
+        if (d.tx_count === 0) {
+          document.getElementById("ob-summary-note").innerHTML =
+            "<strong>No sales yet.</strong> Once you import or add a sale, your estimate fills in here.";
+        }
+      } catch {}
+    }
+
+    async function finish() {
+      try { await api("POST", "/api/auth/complete-onboarding"); } catch {}
+      if (window.cardtaxFunnel) window.cardtaxFunnel.onboardingComplete({ classification: selectedClassification });
+      window.location.href = "/dashboard";
+    }
+    document.getElementById("finish-btn").addEventListener("click", finish);
+    document.getElementById("skip-btn").addEventListener("click", finish);
+
+    showStep(1);
+    loadCurrentSettings();
+  </script>
+</body>
+</html>

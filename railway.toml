@@ -1,0 +1,17 @@
+# Railway deployment config for CardTax.
+# https://docs.railway.app/reference/config-as-code
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/api/healthz"
+healthcheckTimeout = 30
+restartPolicyType = "always"
+restartPolicyMaxRetries = 10
+
+# The SQLite database lives in ./data — mount a Railway volume there so it
+# survives redeploys. In the Railway dashboard:
+#   Service → Variables → "Add Volume" → mount at /app/data

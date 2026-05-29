@@ -1,0 +1,71 @@
+# Local dev stack: PostgreSQL + Redis + the app container.
+#
+# Usage:
+#     docker compose up --build
+# then open http://localhost:8000.
+#
+# The app container runs alembic upgrade head on startup (see Dockerfile).
+# Postgres data persists under the named volume `cardtax_pgdata`; uploads
+# persist under `./data/uploads` on the host.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cardtax
+      POSTGRES_PASSWORD: cardtax
+      POSTGRES_DB: cardtax
+    volumes:
+      - cardtax_pgdata:/var/lib/postgresql/data
+    ports:
+      # Expose for local psql access only — remove in any shared env.
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cardtax -d cardtax"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://cardtax:cardtax@db:5432/cardtax
+      REDIS_URL: redis://redis:6379/0
+      # SECRET_KEY *must* be set for production-style boots — config.py
+      # refuses to start without it when DATABASE_URL is present.
+      SECRET_KEY: ${SECRET_KEY:-dev-compose-secret-change-me}
+      APP_BASE_URL: http://localhost:8000
+      PORT: "8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount uploads so files survive container rebuilds without baking
+      # them into the image. (data/cardtax.db is unused once DATABASE_URL
+      # is set — Postgres is the source of truth here.)
+      - ./data/uploads:/app/data/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  cardtax_pgdata:

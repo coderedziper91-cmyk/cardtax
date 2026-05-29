@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FIFO vs LIFO: Which Cost Basis Method Saves You the Most? · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="FIFO is the IRS default for cards, but LIFO and specific-ID can save money. Here's how the methods compare with real numbers from a card flipper's portfolio.">
+  <meta name="keywords" content="FIFO vs LIFO cards, cost basis cards, lot accounting trading cards, specific ID cost basis">
+  <link rel="canonical" href="https://cardtax.app/blog/fifo-vs-lifo-cost-basis">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="FIFO vs LIFO: Which Cost Basis Method Saves You the Most?">
+  <meta property="og:description" content="FIFO is the IRS default. LIFO and specific-ID can sometimes save more.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "FIFO vs LIFO: Which Cost Basis Method Saves You the Most?",
+    "datePublished": "2026-04-15",
+    "author": { "@type": "Organization", "name": "CardTax" },
+    "publisher": { "@type": "Organization", "name": "CardTax" },
+    "description": "Comparing FIFO, LIFO, and specific-ID lot methods for card sellers."
+  }
+  </script>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("blog");
+    document.getElementById("page-content").innerHTML = `
+      <article class="article">
+        <div style="margin-bottom:18px"><a href="/blog" class="muted" style="font-size:12.5px">← All articles</a></div>
+        <h1>FIFO vs LIFO: Which Cost Basis Method Saves You the Most?</h1>
+        <div class="article-meta">April 15, 2026 · 5 min read · Cost basis</div>
+
+        <p>When you own multiple copies of the same card and sell one, the IRS needs to know <em>which one</em> you sold. That choice — the lot accounting method — changes your taxable gain. The three options for collectibles are <strong>FIFO</strong>, <strong>LIFO</strong>, and <strong>specific identification</strong>.</p>
+
+        <h2>The three methods</h2>
+        <h3>FIFO (First-In, First-Out)</h3>
+        <p>The IRS default. When you sell, you assume you sold the oldest copy in your collection. This tends to surface long-term holding periods (older = more likely to be &gt;1 year held) and often the lowest cost basis (cards bought first are usually cheapest).</p>
+
+        <h3>LIFO (Last-In, First-Out)</h3>
+        <p>You assume you sold the most recent purchase. In a rising market, this means a smaller short-term gain on each sale — but the gain is short-term and taxed as ordinary income.</p>
+
+        <h3>Specific identification</h3>
+        <p>You pick exactly which copy was sold. Requires good records (a serial number, slab number, or PSA cert) but gives you the most control. Optimizers usually run this on high-value cards and FIFO on commons.</p>
+
+        <h2>An example</h2>
+        <p>Say you bought three 2018 Topps Chrome Acuña RC PSA 10s:</p>
+        <ul>
+          <li>March 2022, $180</li>
+          <li>January 2023, $310</li>
+          <li>December 2024, $450</li>
+        </ul>
+        <p>You sell one in April 2026 for $600 (net of fees).</p>
+        <ul>
+          <li><strong>FIFO:</strong> basis $180 → gain $420 (long-term, 28% collectibles rate).</li>
+          <li><strong>LIFO:</strong> basis $450 → gain $150 (still long-term — held &gt;1 year — same 28% rate). LIFO wins here.</li>
+          <li><strong>Specific ID:</strong> pick the $310 lot → gain $290 (long-term). Middle ground.</li>
+        </ul>
+        <p>In this case LIFO saves you $76 in federal tax. But change the holding period of the latest purchase to under a year and LIFO becomes <em>worse</em> — that gain is now ordinary income, often at a higher rate than 28%.</p>
+
+        <div class="article-callout">
+          CardTax computes all three methods side-by-side from the same dataset so you can compare. Set your preferred method in <a href="/settings">Settings</a>; the dashboard recalculates instantly.
+        </div>
+
+        <h2>Rules to remember</h2>
+        <ul>
+          <li><strong>Pick one and stick with it.</strong> Switching methods between tax years requires IRS Form 3115. Don't bounce around.</li>
+          <li><strong>Specific ID requires identification at the time of sale.</strong> You can't choose retroactively when filing — pick the lot before the transaction settles.</li>
+          <li><strong>Records matter.</strong> Without acquisition dates and prices on file, the IRS can disallow basis you claim, especially under LIFO or specific-ID.</li>
+        </ul>
+
+        <h2>Which one to pick</h2>
+        <p>Most casual sellers use FIFO and rarely overpay — it's simple, the IRS default, and produces long-term gains more often. Active flippers with rising-market inventory and good records often benefit from LIFO or specific-ID. CardTax shows the actual dollar difference on your data, so you can see the trade-off before committing.</p>
+
+        <p><a href="/signup">Start a free account</a> and switch lot methods on the fly to see the impact.</p>
+
+        <div class="article-callout">
+          <strong>Disclaimer:</strong> This article is for general information. It is not tax advice. Confirm any filing decision with a qualified CPA or tax attorney.
+        </div>
+      </article>
+    `;
+  </script>
+</body>
+</html>

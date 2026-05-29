@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Something went wrong · CardTax</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="auth-shell">
+    <header class="auth-topbar">
+      <a href="/" class="brand">CardTax</a>
+      <a href="/" class="muted" style="font-size:13px">Back to home →</a>
+    </header>
+
+    <main class="auth-main">
+      <div class="error-page">
+        <div class="error-code">500</div>
+        <h1 class="error-title">Something broke on our end.</h1>
+        <p class="error-sub">
+          We logged the error and we're looking into it. Your data is safe —
+          nothing was changed. Try the page again in a moment, or jump back
+          to your dashboard.
+        </p>
+        <div class="error-actions">
+          <a href="/dashboard" class="btn btn-primary">Go to dashboard</a>
+          <button class="btn btn-secondary" type="button" onclick="window.location.reload()">Try again</button>
+        </div>
+        <div class="error-quick-links">
+          <a href="/transactions">Transactions</a>
+          <a href="/tax-summary">Tax summary</a>
+          <a href="/account">Account</a>
+          <a href="mailto:support@cardtax.app">Email support</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="auth-footer muted">
+      <span>© <span id="year"></span> CardTax</span>
+      <span><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a> · <a href="/pricing">Pricing</a></span>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const saved = localStorage.getItem("cardtax-theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (saved === "dark" || (saved !== "light" && prefersDark)) {
+        document.documentElement.classList.add("dark");
+      }
+    })();
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

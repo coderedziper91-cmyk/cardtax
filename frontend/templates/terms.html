@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Terms · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="CardTax terms of service.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="Terms of Service">
+  <meta property="og:description" content="CardTax terms of service.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Terms of Service">
+  <meta name="twitter:description" content="CardTax terms of service.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .legal { max-width: 680px; margin: 0 auto; }
+    .legal h3 {
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      margin: 36px 0 10px;
+    }
+    .legal p, .legal li {
+      color: var(--ink-soft);
+      font-size: 14.5px;
+      line-height: 1.7;
+      margin: 0 0 12px;
+    }
+    .legal ul { padding-left: 18px; margin: 0 0 12px; }
+    .legal a { color: var(--accent); border-bottom: 1px solid var(--accent-soft); }
+    .legal a:hover { border-bottom-color: var(--accent); }
+  </style>
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("terms");
+    document.getElementById("page-content").innerHTML = `
+      <div class="legal">
+        <div class="page-header" style="margin-bottom:36px">
+          <div>
+            <div class="eyebrow">Legal</div>
+            <div class="title" style="margin-top:8px">Terms of service</div>
+            <div class="subtitle">Last updated ${new Date().toISOString().slice(0,10)}</div>
+          </div>
+        </div>
+        <div id="body"></div>
+      </div>
+    `;
+    const TERMS_HTML = `
+      <h3>1. Acceptance</h3>
+      <p>By using CardTax you agree to these terms. If you do not agree, do not use the service.</p>
+
+      <h3>2. Service description</h3>
+      <p>CardTax is tax-calculation and tracking software for collectors and sellers of sports cards, TCGs, sealed wax, comics, and other collectibles. It helps organize transactions, estimate federal, state, and local tax under IRC §1(h)(4), and preview Schedule C, Schedule D, Form 8949, and Form 1040-ES.</p>
+
+      <div class="note note-warning" style="margin-top:24px">
+        <strong>3. Not tax, legal, or financial advice.</strong> CardTax provides calculations and estimates for informational purposes only. CardTax is not a CPA firm, tax advisory firm, law firm, or registered investment adviser. Outputs are not a substitute for professional advice. Consult a qualified tax professional before filing.
+      </div>
+
+      <h3>4. Your responsibilities</h3>
+      <ul>
+        <li>You are responsible for the accuracy of data you enter.</li>
+        <li>You must verify all calculations before using them on a tax filing.</li>
+        <li>You must comply with all applicable federal, state, and local tax laws, including reporting all income regardless of whether you receive a Form 1099-K.</li>
+      </ul>
+
+      <h3>5. Calculation accuracy</h3>
+      <p>We make reasonable efforts to track current law, including the 2025 OBBBA. The service may contain errors or interpretations that differ from those a tax professional or the IRS would apply. We make no warranty that calculations conform to your specific circumstances.</p>
+
+      <h3>6. AI card identification</h3>
+      <p>Card Scanner uses third-party computer vision to identify cards. Identifications are best-effort estimates and may be incorrect. By uploading images you confirm you have the right to use them.</p>
+
+      <h3>7. Limitation of liability</h3>
+      <p>To the fullest extent permitted by applicable law, CardTax shall not be liable for any indirect, incidental, special, consequential, or punitive damages. CardTax shall not be liable for any tax, penalty, interest, audit, or examination resulting from your reliance on Service outputs. The Service is provided "as is" without warranties of any kind.</p>
+
+      <h3>8. Data handling</h3>
+      <p>See our <a href="/privacy">Privacy Policy</a> for details. You retain ownership of your data; you grant CardTax a limited license to process it to provide the service.</p>
+
+      <h3>9. Intellectual property</h3>
+      <p>All software, text, and assets are owned by CardTax or its licensors and protected by U.S. and international copyright, trademark, and other IP laws.</p>
+
+      <h3>10. Eligibility</h3>
+      <p>You must be at least 18 and a U.S. taxpayer to use CardTax.</p>
+
+      <h3>11. Termination</h3>
+      <p>We may suspend or terminate access at any time. Sections 3, 5, 6, 7, 8, 9, 12, and 13 survive.</p>
+
+      <h3>12. Governing law</h3>
+      <p>Governed by the laws of Delaware. Disputes resolved by binding arbitration administered by the American Arbitration Association, except for individual small claims.</p>
+
+      <h3>13. Changes</h3>
+      <p>We may revise these terms. Material changes will be announced through the service.</p>
+
+      <h3>14. Contact</h3>
+      <p><a href="mailto:legal@cardtax.app">legal@cardtax.app</a></p>
+    `;
+    document.getElementById("body").innerHTML = TERMS_HTML;
+  </script>
+</body>
+</html>

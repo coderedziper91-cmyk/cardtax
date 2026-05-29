@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Waitlist · CardTax Admin</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="CardTax admin console.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="Admin">
+  <meta property="og:description" content="CardTax admin console.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Admin">
+  <meta name="twitter:description" content="CardTax admin console.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="/dashboard" class="brand">CardTax</a>
+      <nav class="nav">
+        <a href="/" class="nav-link">Landing</a>
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+        <a href="/admin" class="nav-link active">Waitlist</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="page">
+      <div class="page-header">
+        <div>
+          <div class="eyebrow">Internal</div>
+          <div class="title" style="margin-top:8px">Waitlist signups</div>
+          <div class="subtitle" id="subtitle">Loading…</div>
+        </div>
+        <div class="page-header-actions">
+          <input type="password" class="input" id="token" placeholder="Admin token (if set)" style="width:240px" autocomplete="off">
+          <button class="btn btn-secondary" id="reload">Reload</button>
+          <a href="/api/waitlist.csv" class="btn btn-primary" id="csv-link" download>Download CSV</a>
+        </div>
+      </div>
+
+      <div class="filterbar">
+        <div class="search">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" class="input" id="search" placeholder="Search email or platform…">
+        </div>
+        <select class="select" id="filter-platform">
+          <option value="">All platforms</option>
+          <option value="ebay">eBay</option>
+          <option value="whatnot">Whatnot</option>
+          <option value="comc">COMC</option>
+          <option value="facebook">Facebook</option>
+          <option value="mercari">Mercari</option>
+          <option value="tcgplayer">TCGplayer</option>
+          <option value="instagram">Instagram</option>
+          <option value="shows">Card shows</option>
+          <option value="other">Other</option>
+        </select>
+        <select class="select" id="filter-volume">
+          <option value="">All volumes</option>
+          <option value="<50">Under 50</option>
+          <option value="50-200">50–200</option>
+          <option value="200-1000">200–1,000</option>
+          <option value="1000+">1,000+</option>
+        </select>
+      </div>
+
+      <div id="empty" class="empty" style="display:none">
+        <div class="empty-title">No signups yet</div>
+        <div class="empty-sub">Once visitors join the waitlist from the landing page, they'll show up here.</div>
+      </div>
+
+      <div id="error" class="note note-danger" style="display:none;margin-bottom:24px"></div>
+
+      <div id="table-wrap" style="overflow-x:auto;display:none">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width:32px">#</th>
+              <th>Email</th>
+              <th>Platforms</th>
+              <th>Volume</th>
+              <th>Signed up</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>© <span id="yr"></span> CardTax · Admin</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+  document.getElementById("yr").textContent = new Date().getFullYear();
+
+  // Theme init (lightweight, no toggle on this page)
+  const saved = localStorage.getItem("cardtax-theme");
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  if (saved === "dark" || (saved !== "light" && prefersDark)) {
+    document.documentElement.classList.add("dark");
+  }
+
+  const TOKEN_KEY = "cardtax-admin-token";
+  const tokenInput = document.getElementById("token");
+  tokenInput.value = sessionStorage.getItem(TOKEN_KEY) || "";
+
+  let ENTRIES = [];
+
+  function fmtDate(d) {
+    if (!d) return "—";
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return d;
+    return dt.toLocaleString("en-US", {
+      year: "numeric", month: "short", day: "numeric",
+      hour: "numeric", minute: "2-digit",
+    });
+  }
+
+  function render() {
+    const q = (document.getElementById("search").value || "").toLowerCase().trim();
+    const plat = document.getElementById("filter-platform").value;
+    const vol = document.getElementById("filter-volume").value;
+
+    const filtered = ENTRIES.filter(e => {
+      if (q) {
+        const hay = (e.email + " " + (e.platforms || []).join(" ")).toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (plat && !(e.platforms || []).includes(plat)) return false;
+      if (vol && e.monthly_volume !== vol) return false;
+      return true;
+    });
+
+    document.getElementById("subtitle").textContent =
+      `${filtered.length} of ${ENTRIES.length} signup${ENTRIES.length === 1 ? "" : "s"}`;
+
+    const empty = document.getElementById("empty");
+    const wrap  = document.getElementById("table-wrap");
+    if (!filtered.length) {
+      empty.style.display = "block";
+      wrap.style.display = "none";
+      return;
+    }
+    empty.style.display = "none";
+    wrap.style.display = "block";
+
+    const rows = document.getElementById("rows");
+    rows.innerHTML = filtered.map((e, i) => `
+      <tr>
+        <td class="muted mono">${i + 1}</td>
+        <td><a href="mailto:${e.email}">${e.email}</a></td>
+        <td>${(e.platforms || []).map(p => `<span class="badge">${p}</span>`).join(" ") || '<span class="muted">—</span>'}</td>
+        <td>${e.monthly_volume ? `<span class="badge">${e.monthly_volume}</span>` : '<span class="muted">—</span>'}</td>
+        <td class="mono muted">${fmtDate(e.signup_date)}</td>
+      </tr>
+    `).join("");
+  }
+
+  async function load() {
+    const err = document.getElementById("error");
+    err.style.display = "none";
+    const tok = tokenInput.value.trim();
+    sessionStorage.setItem(TOKEN_KEY, tok);
+
+    // Update CSV link with token if present
+    const csvLink = document.getElementById("csv-link");
+    csvLink.href = tok ? `/api/waitlist.csv?token=${encodeURIComponent(tok)}` : "/api/waitlist.csv";
+
+    try {
+      const r = await fetch("/api/waitlist", {
+        headers: tok ? { "x-admin-token": tok } : {},
+      });
+      if (r.status === 401) {
+        err.textContent = "Admin token required. Set CARDTAX_ADMIN_TOKEN on the server and enter it above.";
+        err.style.display = "block";
+        document.getElementById("table-wrap").style.display = "none";
+        document.getElementById("empty").style.display = "none";
+        document.getElementById("subtitle").textContent = "Unauthorized";
+        return;
+      }
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      ENTRIES = data.entries || [];
+      render();
+    } catch (e) {
+      err.textContent = "Failed to load waitlist: " + e.message;
+      err.style.display = "block";
+      document.getElementById("subtitle").textContent = "Error";
+    }
+  }
+
+  document.getElementById("reload").addEventListener("click", load);
+  document.getElementById("token").addEventListener("change", load);
+  ["search", "filter-platform", "filter-volume"].forEach(id => {
+    document.getElementById(id).addEventListener("input", render);
+    document.getElementById(id).addEventListener("change", render);
+  });
+
+  load();
+</script>
+</body>
+</html>

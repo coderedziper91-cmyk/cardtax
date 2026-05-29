@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tax summary · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Federal, state, and quarterly tax estimates from your card sales.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="Tax summary">
+  <meta property="og:description" content="Federal, state, and quarterly tax estimates from your card sales.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tax summary">
+  <meta name="twitter:description" content="Federal, state, and quarterly tax estimates from your card sales.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("tax-summary");
+    const content = document.getElementById("page-content");
+    content.innerHTML = `
+      <div class="disclaimer-banner">
+        <strong>Disclaimer:</strong> CardTax provides tax calculations for informational purposes only. This is not tax advice. Consult a qualified tax professional before filing.
+      </div>
+      <div class="page-header">
+        <div>
+          <div class="title">Tax summary</div>
+          <div class="subtitle">
+            Year <span id="ty">2025</span> · <span id="cls"></span> · <span id="status"></span> · <span id="state-tag" class="tertiary"></span>
+          </div>
+        </div>
+        <div class="page-header-actions" id="pdf-actions" data-track="pdf-actions">
+          <a href="/api/tax-summary/pdf/summary" class="btn btn-primary" data-pdf="summary" download>Download summary PDF</a>
+          <a href="/api/tax-summary/pdf/form-8949" class="btn btn-secondary" data-pdf="form-8949" download>Form 8949</a>
+          <a href="/api/tax-summary/pdf/schedule-d" class="btn btn-secondary" id="dl-schedule-d" data-pdf="schedule-d" download>Schedule D</a>
+          <a href="/api/tax-summary/pdf/schedule-c" class="btn btn-secondary" id="dl-schedule-c" data-pdf="schedule-c" download style="display:none">Schedule C</a>
+        </div>
+      </div>
+
+      <div id="kpis" class="kpi-row"></div>
+
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-header"><div class="card-title">Tax breakdown</div></div>
+        <div id="tax-breakdown-body"></div>
+      </div>
+
+      <div class="grid grid-2" style="margin-bottom:24px">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Short-term gains (≤1 yr) ${tt(TAX_TOOLTIPS["Capital Gains"])}</div></div>
+          <div class="muted" style="font-size:13px;margin-bottom:8px">Taxed as ordinary income at your marginal bracket.</div>
+          <div id="st"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Long-term gains (&gt;1 yr) ${tt(TAX_TOOLTIPS.Collectibles)}</div></div>
+          <div class="muted" style="font-size:13px;margin-bottom:8px">Collectibles capped at 28% per IRC §1(h)(4)–(5).</div>
+          <div id="lt"></div>
+        </div>
+      </div>
+
+      <div id="amt-section" class="card" style="margin-bottom:24px;display:none">
+        <div class="card-header"><div class="card-title">Alternative Minimum Tax (Form 6251)</div></div>
+        <div id="amt-body"></div>
+      </div>
+
+      <div id="se-section" class="card" style="margin-bottom:24px;display:none">
+        <div class="card-header"><div class="card-title">Self-employment tax (Schedule SE)</div></div>
+        <div id="se-body"></div>
+      </div>
+
+      <div id="qbi-section" class="card" style="margin-bottom:24px;display:none">
+        <div class="card-header"><div class="card-title">§199A QBI deduction</div></div>
+        <div id="qbi-body"></div>
+      </div>
+
+      <div id="nol-section" class="card" style="margin-bottom:24px;display:none">
+        <div class="card-header"><div class="card-title">Net operating loss</div></div>
+        <div id="nol-body"></div>
+      </div>
+
+      <div id="kiddie-section" class="card" style="margin-bottom:24px;display:none">
+        <div class="card-header"><div class="card-title">Kiddie tax (Form 8615)</div></div>
+        <div id="kiddie-body"></div>
+      </div>
+
+      <div id="schedule-section" class="card" style="margin-bottom:24px"></div>
+      <div id="form-8949" class="card" style="margin-bottom:24px"></div>
+
+      <div id="donations-section" class="card" style="margin-bottom:24px;display:none">
+        <div class="card-header"><div class="card-title">Charitable donations (Schedule A)</div></div>
+        <div class="muted" style="font-size:13px;margin-bottom:14px">Per IRC §170 and §170(e)(1)(B)(i) unrelated-use rule for tangible personal property.</div>
+        <div id="donations-body"></div>
+      </div>
+
+      <div id="personal-use-section" class="card" style="margin-bottom:24px;display:none">
+        <div class="card-header"><div class="card-title">Personal-use losses (not deductible)</div></div>
+        <div class="muted" style="font-size:13px;margin-bottom:14px">IRC §165(c) disallows losses on personal-use property. Gains are still taxable.</div>
+        <div id="personal-use-body"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-header"><div class="card-title">Quarterly estimated tax (Form 1040-ES)</div></div>
+        <div id="quarterly-body"></div>
+      </div>
+
+      <div id="like-kind" class="card" style="margin-bottom:24px"></div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Compliance notes</div></div>
+        <ul id="notes" class="muted" style="font-size:13px;padding-left:18px;margin:0;line-height:1.7"></ul>
+      </div>
+
+      ${disclaimerFooter()}
+    `;
+
+    function kpi({ label, value, sub, cls }) {
+      return `<div class="kpi">
+        <div class="kpi-label">${label}</div>
+        <div class="kpi-value ${cls || ""}">${value}</div>
+        ${sub ? `<div class="kpi-sub">${sub}</div>` : ""}
+      </div>`;
+    }
+    function row(label, value, cls) {
+      return `<div class="row"><span class="row-label">${label}</span><span class="row-value ${cls || ""}">${value}</span></div>`;
+    }
+
+    function renderScheduleC(sc) {
+      return `
+        <div class="card-header"><div class="card-title">Schedule C preview</div></div>
+        <div class="muted" style="font-size:13px;margin-bottom:14px">Form 1040 Schedule C — Profit or Loss from Business. All expenses deductible; net profit subject to SE tax.</div>
+        <div class="grid grid-2">
+          <div>
+            ${row("Line 1 · Gross receipts", fmt$(sc.line_1_gross_receipts))}
+            ${row("Line 2 · Returns / allowances", fmt$(sc.line_2_returns_allowances))}
+            ${row("Line 3 · Net receipts", fmt$(sc.line_3_net_receipts))}
+            ${row("Line 4 · Cost of goods sold", fmt$(sc.line_4_cogs))}
+            ${row("Line 5 · Gross profit", fmt$(sc.line_5_gross_profit), "gain strong")}
+            ${row("Line 7 · Gross income", fmt$(sc.line_7_gross_income))}
+          </div>
+          <div>
+            <div class="eyebrow" style="margin-bottom:8px">Expenses · Lines 8–27</div>
+            ${row("Line 10 · Commissions / fees", fmt$(sc.expenses.line_10_commissions_fees))}
+            ${row("Line 22 · Supplies", fmt$(sc.expenses.line_22_supplies))}
+            ${row("Line 24a · Travel", fmt$(sc.expenses.line_24a_travel))}
+            ${row("Line 27 · Grading / other", fmt$(sc.expenses.line_27_grading_other))}
+            ${row("Shipping & postage", fmt$(sc.expenses.shipping_and_postage))}
+            ${row("Line 28 · Total expenses", fmt$(sc.line_28_total_expenses))}
+            ${row("Line 31 · Net profit/loss", fmt$(sc.line_31_net_profit), gainCls(sc.line_31_net_profit) + " strong")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderScheduleD(sd) {
+      function rows(arr) {
+        if (!arr.length) return `<tr><td colspan="6" class="muted" style="text-align:center">No transactions</td></tr>`;
+        return arr.slice(0, 30).map(t => `<tr>
+          <td>${t.description}</td>
+          <td class="muted">${t.date_acquired}</td>
+          <td class="muted">${t.date_sold}</td>
+          <td class="num">${fmt$(t.proceeds)}</td>
+          <td class="num">${fmt$(t.basis)}</td>
+          <td class="num ${gainCls(t.gain_loss)}">${fmt$(t.gain_loss)}</td>
+        </tr>`).join("");
+      }
+      return `
+        <div class="card-header"><div class="card-title">Schedule D / Form 8949 preview</div></div>
+        <div class="muted" style="font-size:13px;margin-bottom:14px">Long-term collectible gains flow through the 28% Rate Gain Worksheet (Sch D line 18).</div>
+
+        <div style="margin-bottom:20px">
+          <div class="eyebrow" style="margin-bottom:8px">Part I · Short-term</div>
+          <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)"><table class="table table-compact">
+            <thead><tr><th>Description</th><th>Acquired</th><th>Sold</th><th class="num">Proceeds</th><th class="num">Basis</th><th class="num">G/L</th></tr></thead>
+            <tbody>${rows(sd.part_i_short_term.transactions)}</tbody>
+          </table></div>
+          <div style="text-align:right;margin-top:8px;font-size:13px" class="muted">Line 7 net short-term:
+            <strong class="${gainCls(sd.part_i_short_term.line_7_net_short_term)}">${fmt$(sd.part_i_short_term.line_7_net_short_term)}</strong>
+          </div>
+        </div>
+
+        <div>
+          <div class="eyebrow" style="margin-bottom:8px">Part II · Long-term (28% rate gain)</div>
+          <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)"><table class="table table-compact">
+            <thead><tr><th>Description</th><th>Acquired</th><th>Sold</th><th class="num">Proceeds</th><th class="num">Basis</th><th class="num">G/L</th></tr></thead>
+            <tbody>${rows(sd.part_ii_long_term.transactions)}</tbody>
+          </table></div>
+          <div style="text-align:right;margin-top:8px;font-size:13px" class="muted">Line 15 net long-term:
+            <strong class="${gainCls(sd.part_ii_long_term.line_15_net_long_term)}">${fmt$(sd.part_ii_long_term.line_15_net_long_term)}</strong>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);text-align:right">
+          <span class="muted" style="margin-right:12px;font-size:13px">Line 16 net capital gain / loss</span>
+          <strong class="${gainCls(sd.line_16_net_total)}" style="font-size:18px">${fmt$(sd.line_16_net_total)}</strong>
+        </div>
+      `;
+    }
+
+    function renderForm8949(f) {
+      function renderBox(title, rows) {
+        if (!rows || !rows.length) return "";
+        const r = rows.map(r => `<tr>
+          <td>${r.description}</td>
+          <td class="muted">${r.date_acquired}</td>
+          <td class="muted">${r.date_sold}</td>
+          <td class="num">${fmt$(r.proceeds)}</td>
+          <td class="num">${fmt$(r.basis)}</td>
+          <td class="mono" style="text-align:center">${r.code || "—"}</td>
+          <td class="num ${gainCls(r.gain_loss)}">${fmt$(r.gain_loss)}</td>
+        </tr>`).join("");
+        return `<div style="margin-top:14px">
+          <div class="eyebrow" style="margin-bottom:8px">${title}</div>
+          <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)"><table class="table table-compact">
+            <thead><tr><th>Description</th><th>Acquired</th><th>Sold</th><th class="num">Proceeds</th><th class="num">Basis</th><th>Code</th><th class="num">G/L</th></tr></thead>
+            <tbody>${r}</tbody>
+          </table></div>
+        </div>`;
+      }
+      const out = [];
+      Object.entries(f.short_term || {}).forEach(([k, box]) => {
+        if (box.rows.length) out.push(renderBox(`Short-term · Box ${k.split("_")[0]}`, box.rows));
+      });
+      Object.entries(f.long_term || {}).forEach(([k, box]) => {
+        if (box.rows.length) out.push(renderBox(`Long-term · Box ${k.split("_")[0]}`, box.rows));
+      });
+      if (!out.length) return `<div class="card-header"><div class="card-title">Form 8949 preview</div></div><div class="muted" style="font-size:13px">No reportable rows yet.</div>`;
+      return `<div class="card-header"><div class="card-title">Form 8949 preview</div></div>
+        <div class="muted" style="font-size:13px;margin-bottom:8px">${f.note}</div>${out.join("")}`;
+    }
+
+    async function load() {
+      const data = await api("GET", "/api/tax-summary");
+      const s = data.summary;
+
+      // Funnel: first time this user views a calculated tax summary
+      if (window.cardtaxFunnel) {
+        window.cardtaxFunnel.firstTaxCalc({
+          classification: s.classification,
+          tax_year: data.settings.tax_year,
+          estimated_total_tax: Math.round(s.estimated_total_tax || 0),
+        });
+      }
+
+      document.getElementById("ty").textContent = data.settings.tax_year;
+      document.getElementById("cls").textContent = ({hobby:"Hobby", investor:"Investor", dealer:"Dealer"})[s.classification] || s.classification;
+      document.getElementById("status").textContent = ({single:"Single", mfj:"MFJ", mfs:"MFS", hoh:"HOH"})[s.filing_status] || s.filing_status;
+      document.getElementById("state-tag").textContent =
+        data.settings.state ? `${data.settings.state}${data.settings.city ? " · " + data.settings.city.split(":").pop() : ""}` : "No state";
+
+      // Toggle Schedule C vs Schedule D download button based on classification.
+      const isDealer = s.classification === "dealer";
+      document.getElementById("dl-schedule-c").style.display = isDealer ? "inline-flex" : "none";
+      document.getElementById("dl-schedule-d").style.display = isDealer ? "none" : "inline-flex";
+
+      document.getElementById("kpis").innerHTML = [
+        kpi({ label:"Net cap gain/loss", value: fmt$0(s.total_net), sub: `Gross ${fmt$0(s.gross_receipts)} − basis ${fmt$0(s.total_basis)}`, cls: gainCls(s.total_net) }),
+        kpi({ label:"Federal", value: fmt$0(s.federal_income_tax + s.niit), sub: `Collectibles ${fmt$0(s.collectibles_tax)} · NIIT ${fmt$0(s.niit)}` }),
+        kpi({ label:"State + local", value: fmt$0(s.state_tax + (data.local_detail?.total_local_tax || 0)), sub: data.settings.state ? `${data.settings.state}${data.settings.city ? " + " + data.settings.city.split(":").pop() : ""}` : "Set state in settings" }),
+        kpi({ label:"Total estimated", value: fmt$0(s.estimated_total_tax), cls:"loss" }),
+      ].join("");
+
+      const stateRows = data.state_detail && data.state_detail.profile_code ? `
+        ${row(`State · ordinary income`, fmt$(data.state_detail.tax_on_ordinary))}
+        ${row(`State · short-term gain`, fmt$(data.state_detail.tax_on_st_gain))}
+        ${row(`State · long-term gain${data.state_detail.lt_rate_used ? ` (${(data.state_detail.lt_rate_used*100).toFixed(1)}%)` : ""}`, fmt$(data.state_detail.tax_on_lt_collectible_gain))}
+        ${row("Subtotal", fmt$(s.state_tax), "strong")}
+      ` : `<div class="muted" style="font-size:13px">No state selected. <a href="/settings">Pick your state</a>.</div>`;
+
+      const localRows = data.local_detail ? `
+        ${Object.entries(data.local_detail.breakdown || {}).map(([k, v]) => row(k.replace(/_/g," "), fmt$(v))).join("")}
+        ${row(`Subtotal · ${data.local_detail.city || ""}`, fmt$(data.local_detail.total_local_tax), "strong")}
+      ` : `<div class="muted" style="font-size:13px">No city/local tax. <a href="/settings">Add your city</a> if applicable.</div>`;
+
+      document.getElementById("tax-breakdown-body").innerHTML = `
+        <div class="grid grid-3">
+          <div>
+            <div class="eyebrow" style="margin-bottom:8px">Federal</div>
+            ${row(`Collectibles LT (28% cap) ${tt(TAX_TOOLTIPS.Collectibles)}`, fmt$(s.collectibles_tax))}
+            ${row("Other ordinary (ST / SE / hobby)", fmt$(s.federal_income_tax - s.collectibles_tax))}
+            ${row(`NIIT ${tt(TAX_TOOLTIPS.NIIT)}`, fmt$(s.niit))}
+            ${row("Subtotal", fmt$(s.federal_income_tax + s.niit), "strong")}
+          </div>
+          <div>
+            <div class="eyebrow" style="margin-bottom:8px">State</div>
+            ${stateRows}
+          </div>
+          <div>
+            <div class="eyebrow" style="margin-bottom:8px">Local</div>
+            ${localRows}
+          </div>
+        </div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:500">Total estimated tax</span>
+          <span class="loss" style="font-size:22px;font-weight:600">${fmt$(s.estimated_total_tax)}</span>
+        </div>
+        ${s.salt_note ? `<div class="note" style="margin-top:14px;font-size:12.5px"><strong>SALT (Schedule A):</strong> ${s.salt_note}</div>` : ""}
+      `;
+
+      // AMT
+      if (data.amt) {
+        document.getElementById("amt-section").style.display = "block";
+        document.getElementById("amt-body").innerHTML = `
+          <div class="muted" style="font-size:13px;margin-bottom:12px">${data.amt.note}</div>
+          <div class="grid grid-3">
+            <div>${row("AMTI", fmt$(data.amt.amti))}${row("Exemption used", fmt$(data.amt.exemption_used))}</div>
+            <div>${row("Tentative minimum tax", fmt$(data.amt.tentative_minimum_tax))}${row("Regular tax for comparison", fmt$(data.amt.regular_tax_for_comparison))}</div>
+            <div>${row("AMT owed", fmt$(data.amt.amt_owed), data.amt.applies ? "loss strong" : "")}</div>
+          </div>
+          ${data.amt.applies ? `<div class="note note-warning" style="margin-top:14px;font-size:13px">File Form 6251 — tentative minimum tax exceeds regular tax.</div>` : ""}
+        `;
+      }
+
+      // SE
+      if (data.self_employment_tax) {
+        document.getElementById("se-section").style.display = "block";
+        const se = data.self_employment_tax;
+        document.getElementById("se-body").innerHTML = `
+          <div class="muted" style="font-size:13px;margin-bottom:12px">Schedule SE — applies to dealer / Schedule C net profit.</div>
+          <div class="grid grid-2">
+            <div>
+              ${row("Net SE earnings", fmt$(se.net_se_earnings))}
+              ${row("SE base (92.35%)", fmt$(se.se_base_92_35pct))}
+              ${row("Social Security (12.4%, capped)", fmt$(se.social_security_tax))}
+            </div>
+            <div>
+              ${row("Medicare (2.9%, uncapped)", fmt$(se.medicare_tax))}
+              ${row("Additional Medicare (0.9%)", fmt$(se.additional_medicare_tax))}
+              ${row("Total SE tax", fmt$(se.total_se_tax), "loss strong")}
+              ${row("Deductible half (Sch 1)", fmt$(se.deductible_half_schedule_1), "gain")}
+            </div>
+          </div>
+        `;
+      }
+
+      // QBI
+      if (data.qbi) {
+        document.getElementById("qbi-section").style.display = "block";
+        const q = data.qbi;
+        document.getElementById("qbi-body").innerHTML = `
+          <div class="muted" style="font-size:13px;margin-bottom:12px">Card dealing is NOT a specified service trade or business — 20% QBI deduction is generally available.</div>
+          <div class="grid grid-3">
+            <div>${row("Tentative (20% × QBI)", fmt$(q.tentative))}</div>
+            <div>${row("Taxable income limit", fmt$(q.taxable_income_limit || 0))}</div>
+            <div>${row("Allowed", fmt$(q.deduction), "gain strong")}</div>
+          </div>
+          ${(q.notes || []).map(n => `<div class="note" style="margin-top:10px;font-size:12.5px">${n}</div>`).join("")}
+        `;
+      }
+
+      // NOL
+      if (data.nol) {
+        document.getElementById("nol-section").style.display = "block";
+        const n = data.nol;
+        document.getElementById("nol-body").innerHTML = `
+          <div class="muted" style="font-size:13px;margin-bottom:12px">${n.note}</div>
+          <div class="grid grid-2">
+            <div>
+              ${row("Prior year carryforward", fmt$(n.prior_year_carryforward))}
+              ${row("Current year loss", fmt$(n.current_year_business_loss))}
+              ${row("80% TI limit", fmt$(n.eighty_pct_taxable_income_limit))}
+            </div>
+            <div>
+              ${row("Used this year", fmt$(n.nol_used_this_year), "gain")}
+              ${row("New loss added", fmt$(n.new_loss_added))}
+              ${row("Carryforward to next", fmt$(n.carryforward_to_next_year), "strong")}
+            </div>
+          </div>
+        `;
+      }
+
+      // Kiddie
+      if (data.kiddie_tax) {
+        document.getElementById("kiddie-section").style.display = "block";
+        const k = data.kiddie_tax;
+        document.getElementById("kiddie-body").innerHTML = `
+          <div class="muted" style="font-size:13px;margin-bottom:12px">${k.note}</div>
+          ${k.applies ? `<div class="grid grid-2">${row("Income at parent rate", fmt$(k.income_at_parent_rate))}${row("Extra tax", fmt$(k.extra_tax_at_parent_rate), "loss")}</div>` : ""}
+        `;
+      }
+
+      // ST / LT
+      document.getElementById("st").innerHTML = `
+        ${row("Short-term gains", fmt$(s.short_term_gain), "gain")}
+        ${row("Short-term losses", fmt$(s.short_term_loss), "loss")}
+        ${row("Net short-term", fmt$(s.net_short_term), gainCls(s.net_short_term) + " strong")}
+        <div class="note" style="margin-top:12px;font-size:12.5px">Stacks on ordinary income at your ${fmtPct(s.bracket_marginal_rate)} marginal rate.</div>
+      `;
+      document.getElementById("lt").innerHTML = `
+        ${row("Long-term gains", fmt$(s.long_term_gain), "gain")}
+        ${row("Long-term losses", fmt$(s.long_term_loss), "loss")}
+        ${row("Net long-term", fmt$(s.net_long_term), gainCls(s.net_long_term) + " strong")}
+        ${row("Tax @ collectibles rate", fmt$(s.collectibles_tax), "loss")}
+        <div class="note" style="margin-top:12px;font-size:12.5px">Effective rate: <strong>${fmtPct(s.effective_collectibles_rate)}</strong> (lower of 28% or ordinary marginal).</div>
+      `;
+
+      if (data.schedule_c) document.getElementById("schedule-section").innerHTML = renderScheduleC(data.schedule_c);
+      else if (data.schedule_d) document.getElementById("schedule-section").innerHTML = renderScheduleD(data.schedule_d);
+      if (data.form_8949) document.getElementById("form-8949").innerHTML = renderForm8949(data.form_8949);
+
+      if (data.donations && data.donations.length) {
+        document.getElementById("donations-section").style.display = "block";
+        const rows = data.donations.map(d => `<tr>
+          <td>${escHtml(d.item_title)}</td><td class="muted">${fmtDate(d.donation_date)}</td><td>${escHtml(d.donee_organization || "—")}</td>
+          <td class="num">${fmt$(d.fmv)}</td><td class="num">${fmt$(d.basis)}</td>
+          <td>${d.long_term ? '<span class="badge">LT</span>' : '<span class="badge badge-warning">ST</span>'}</td>
+          <td class="muted">${d.unrelated_use ? "Unrelated" : "Related"}</td>
+          <td class="num" style="font-weight:500">${fmt$(d.deduction_used)}</td>
+        </tr>`).join("");
+        document.getElementById("donations-body").innerHTML = `
+          <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)"><table class="table table-compact">
+            <thead><tr><th>Item</th><th>Date</th><th>Donee</th><th class="num">FMV</th><th class="num">Basis</th><th>Hold</th><th>Use</th><th class="num">Deduction</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table></div>
+          <div class="grid grid-4" style="margin-top:16px">
+            ${kpi({ label:"Total FMV", value: fmt$0(s.charitable_deduction_fmv) })}
+            ${kpi({ label:"Total basis", value: fmt$0(s.charitable_deduction_basis) })}
+            ${kpi({ label:"Deduction allowed", value: fmt$0(s.charitable_deduction_allowed), sub:"Schedule A line 12" })}
+            ${kpi({ label:"5-yr carryforward", value: fmt$0(s.charitable_carryforward) })}
+          </div>
+        `;
+      }
+
+      if (data.personal_use_disallowed && data.personal_use_disallowed.length) {
+        document.getElementById("personal-use-section").style.display = "block";
+        document.getElementById("personal-use-body").innerHTML = `
+          <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)"><table class="table table-compact">
+            <thead><tr><th>Item</th><th class="num">Disallowed loss</th></tr></thead>
+            <tbody>${data.personal_use_disallowed.map(p => `<tr><td>${escHtml(p.item_title)}</td><td class="num loss">${fmt$(p.loss)}</td></tr>`).join("")}</tbody>
+          </table></div>
+          <div style="text-align:right;margin-top:10px;font-size:13.5px">Total disallowed: <strong>${fmt$(s.disallowed_personal_use_losses)}</strong></div>
+        `;
+      }
+
+      const q = data.quarterly;
+      document.getElementById("quarterly-body").innerHTML = `
+        <div class="grid grid-4" style="margin-bottom:16px">
+          ${kpi({ label:"Required payments", value: fmt$0(q.required_estimated_payments), sub: `Safe harbor: ${q.safe_harbor_method.replace(/_/g," ")}` })}
+          ${kpi({ label:"Per quarter", value: fmt$0(q.per_quarter), sub:"Equal installments" })}
+          ${kpi({ label:"Safe-harbor target", value: fmt$0(q.safe_harbor_amount), sub:`Withheld: ${fmt$0(q.withholding_paid)}` })}
+          ${kpi({ label:"Penalty risk", value: q.penalty_risk ? "Yes" : "No", sub: q.penalty_risk ? "Below safe harbor" : "On track", cls: q.penalty_risk ? "loss" : "gain" })}
+        </div>
+        <div class="grid grid-4">
+          ${q.due_dates.map((d, i) => `<div class="card" style="text-align:left;padding:14px"><div class="kpi-label">Q${i+1}</div><div style="font-weight:500;margin-top:4px">${fmtDate(d)}</div><div class="tertiary" style="font-size:12px;margin-top:2px">${fmt$(q.per_quarter)}</div></div>`).join("")}
+        </div>
+        <ul class="muted" style="font-size:12.5px;margin-top:14px;padding-left:18px;line-height:1.7">
+          ${q.notes.map(n => `<li>${n}</li>`).join("")}
+        </ul>
+      `;
+
+      document.getElementById("like-kind").innerHTML = `
+        <div class="card-header"><div class="card-title">Common misconception · §1031</div></div>
+        <div class="muted" style="font-size:13px;line-height:1.65">${data.like_kind_note}</div>
+      `;
+
+      document.getElementById("notes").innerHTML = (s.notes || []).map(n => `<li>${n}</li>`).join("");
+    }
+    load().catch(e => { console.error(e); toast(e.message, "error"); });
+
+    // PDF export — show spinner state on the clicked button until the
+    // browser navigation kicks in. PDFs are downloaded directly, so we
+    // restore the label after a short delay (1.5s).
+    document.addEventListener("click", e => {
+      const a = e.target.closest && e.target.closest("a[data-pdf]");
+      if (!a) return;
+      if (typeof window.gtagEvent === "function") {
+        window.gtagEvent("pdf_export", { kind: a.dataset.pdf });
+      }
+      const restore = setBtnLoading(a, "Generating PDF…");
+      setTimeout(restore, 1500);
+    });
+  </script>
+</body>
+</html>

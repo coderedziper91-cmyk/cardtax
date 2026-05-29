@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Upload · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Import your eBay, Whatnot, COMC, MySlabs, TCGplayer, or Mercari CSV.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="Import CSV">
+  <meta property="og:description" content="Import your eBay, Whatnot, COMC, MySlabs, TCGplayer, or Mercari CSV.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Import CSV">
+  <meta name="twitter:description" content="Import your eBay, Whatnot, COMC, MySlabs, TCGplayer, or Mercari CSV.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("upload");
+    const content = document.getElementById("page-content");
+    content.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="title">Upload</div>
+          <div class="subtitle">Import sales from eBay, Whatnot, or any CSV.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:24px">
+        <div id="dropzone" class="dropzone">
+          <div class="dropzone-icon">${ICONS.upload}</div>
+          <div class="dropzone-title">Drop your CSV here</div>
+          <div class="dropzone-sub">or click to browse</div>
+          <input type="file" id="file-input" accept=".csv" hidden>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-header"><div class="card-title">Supported formats</div></div>
+        <div class="grid grid-3">
+          <div>
+            <div style="font-weight:500;margin-bottom:4px">eBay</div>
+            <div class="muted" style="font-size:12.5px">Seller Hub → Payments → Reports → Transaction report</div>
+          </div>
+          <div>
+            <div style="font-weight:500;margin-bottom:4px">Whatnot</div>
+            <div class="muted" style="font-size:12.5px">Seller dashboard → Reports → Sales export</div>
+          </div>
+          <div>
+            <div style="font-weight:500;margin-bottom:4px">Generic CSV</div>
+            <div class="muted" style="font-size:12.5px">Any CSV — map columns on the next step</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="preview-card" class="card" style="display:none">
+        <div class="card-header">
+          <div class="card-title">Preview</div>
+          <span id="detected-badge" class="badge"></span>
+        </div>
+        <div class="muted" id="auto-msg" style="font-size:13px;margin-bottom:16px"></div>
+
+        <div id="mapping-section" style="display:none;margin-bottom:16px">
+          <div class="eyebrow" style="margin-bottom:8px">Column mapping</div>
+          <div class="muted" style="font-size:12.5px;margin-bottom:14px">Map each field to a CSV column. Required: title, date, price.</div>
+          <div id="mapping-grid" class="grid grid-2"></div>
+        </div>
+
+        <div id="sample-table" style="margin-bottom:16px"></div>
+
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" id="import-btn">Import transactions</button>
+          <button class="btn btn-ghost" id="cancel-upload">Start over</button>
+        </div>
+      </div>
+    `;
+
+    let selectedFile = null, detectedPlatform = "generic", csvHeaders = [];
+    const dz = document.getElementById("dropzone"), fi = document.getElementById("file-input");
+    dz.addEventListener("click", () => fi.click());
+    dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("dragover"); });
+    dz.addEventListener("dragleave", () => dz.classList.remove("dragover"));
+    dz.addEventListener("drop", e => { e.preventDefault(); dz.classList.remove("dragover"); e.dataTransfer.files[0] && handle(e.dataTransfer.files[0]); });
+    fi.addEventListener("change", e => e.target.files[0] && handle(e.target.files[0]));
+    document.getElementById("cancel-upload").addEventListener("click", () => {
+      selectedFile = null; fi.value = "";
+      document.getElementById("preview-card").style.display = "none";
+    });
+
+    async function handle(file) {
+      selectedFile = file;
+      const fd = new FormData(); fd.append("file", file);
+      const r = await fetch("/api/upload/preview", { method: "POST", body: fd });
+      const d = await r.json();
+      detectedPlatform = d.platform; csvHeaders = d.headers;
+      document.getElementById("preview-card").style.display = "block";
+
+      const b = document.getElementById("detected-badge");
+      const known = ["ebay","whatnot"].includes(d.detected_platform);
+      b.textContent = known ? `Detected · ${d.detected_platform}` : "Unknown format";
+      b.className = "badge" + (known ? " badge-gain" : " badge-warning");
+
+      if (known) {
+        document.getElementById("auto-msg").innerHTML = `Auto-parsed <strong>${d.sample.length}</strong> sample rows.`;
+        document.getElementById("mapping-section").style.display = "none";
+        renderSample(d.sample);
+      } else {
+        document.getElementById("auto-msg").textContent = "Unknown format — map columns below to proceed.";
+        document.getElementById("mapping-section").style.display = "block";
+        renderMapping(); renderHeaders();
+      }
+    }
+
+    function renderSample(sample) {
+      if (!sample.length) {
+        document.getElementById("sample-table").innerHTML = `<div class="note note-warning">No rows parsed. Try the generic mapping below.</div>`;
+        document.getElementById("mapping-section").style.display = "block";
+        renderMapping();
+        return;
+      }
+      document.getElementById("sample-table").innerHTML = `
+        <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)"><table class="table table-compact">
+          <thead><tr><th>Item</th><th>Date</th><th class="num">Price</th><th class="num">Fees</th><th class="num">Ship cost</th></tr></thead>
+          <tbody>${sample.map(s => `<tr><td>${escHtml(s.item_title)}</td><td class="muted">${fmtDate(s.sale_date)}</td><td class="num">${fmt$(s.sale_price)}</td><td class="num">${fmt$(s.platform_fees)}</td><td class="num">${fmt$(s.shipping_cost_out)}</td></tr>`).join("")}</tbody>
+        </table></div>`;
+    }
+
+    const MAPPING_FIELDS = [
+      { key: "item_title", label: "Item title", required: true },
+      { key: "sale_date", label: "Sale date", required: true },
+      { key: "sale_price", label: "Sale price", required: true },
+      { key: "platform_fees", label: "Platform fees" },
+      { key: "shipping_charged", label: "Shipping charged to buyer" },
+      { key: "shipping_cost_out", label: "Your shipping cost" },
+    ];
+    function renderMapping() {
+      document.getElementById("mapping-grid").innerHTML = MAPPING_FIELDS.map(f => `
+        <label class="field"><span class="field-label">${f.label}${f.required ? " *" : ""}</span>
+          <select class="select map-field" data-key="${f.key}">
+            <option value="">— skip —</option>
+            ${csvHeaders.map(h => `<option value="${h}">${h}</option>`).join("")}
+          </select></label>
+      `).join("");
+    }
+    function renderHeaders() {
+      document.getElementById("sample-table").innerHTML = `
+        <div class="muted" style="font-size:12.5px;margin-bottom:8px">Detected columns:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${csvHeaders.map(h => `<span class="badge">${h}</span>`).join("")}</div>`;
+    }
+    document.getElementById("import-btn").addEventListener("click", async () => {
+      if (!selectedFile) return;
+      const fd = new FormData(); fd.append("file", selectedFile);
+      fd.append("platform", detectedPlatform === "generic" ? "generic" : detectedPlatform);
+      if (detectedPlatform === "generic") {
+        const m = {};
+        document.querySelectorAll(".map-field").forEach(s => { if (s.value) m[s.dataset.key] = s.value; });
+        if (!m.item_title || !m.sale_date || !m.sale_price) { toast("Map title, date, and price columns", "error"); return; }
+        m.platform_source = "generic";
+        fd.append("mapping", JSON.stringify(m));
+      }
+      const btn = document.getElementById("import-btn");
+      const restore = setBtnLoading(btn, "Uploading…");
+      try {
+        const r = await fetch("/api/upload/import", { method: "POST", body: fd });
+        const d = await r.json();
+        if (!r.ok) {
+          toast(d.detail || "Import failed", "error");
+          restore();
+          return;
+        }
+        if (typeof window.gtagEvent === "function") {
+          window.gtagEvent("csv_upload", { platform: d.platform || detectedPlatform || "unknown", created: d.created || 0 });
+        }
+        if (window.cardtaxFunnel) {
+          window.cardtaxFunnel.firstUpload({ platform: d.platform || detectedPlatform || "unknown", created: d.created || 0 });
+        }
+        const dupMsg = d.skipped ? ` · ${d.skipped} duplicates skipped` : "";
+        toast(`Imported ${d.created} transactions${dupMsg}`, "success");
+        setTimeout(() => window.location.href = "/transactions", 900);
+      } catch (e) {
+        toast("Upload failed", "error");
+        restore();
+      }
+    });
+  </script>
+</body>
+</html>

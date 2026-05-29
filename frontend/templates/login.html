@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Sign in to your CardTax account — IRS-ready tax tracking for card sellers.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="Sign in to CardTax">
+  <meta property="og:description" content="Sign in to your CardTax account — IRS-ready tax tracking for card sellers.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Sign in to CardTax">
+  <meta name="twitter:description" content="Sign in to your CardTax account — IRS-ready tax tracking for card sellers.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div class="auth-shell">
+    <header class="auth-topbar">
+      <a href="/" class="brand">CardTax</a>
+      <a href="/signup" class="muted" style="font-size:13px">Need an account? Sign up →</a>
+    </header>
+
+    <main class="auth-main">
+      <div class="auth-card">
+        <h1 class="auth-title">Welcome back</h1>
+        <p class="auth-sub">Sign in to your CardTax account.</p>
+
+        <div id="error-banner" class="note note-danger" style="display:none;margin-bottom:18px"></div>
+
+        <button id="google-btn" class="btn btn-secondary auth-google" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.4-1.6 4-5.5 4-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.9 1.5l2.6-2.6C16.9 3.2 14.7 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12s4.4 9.8 9.8 9.8c5.7 0 9.4-4 9.4-9.6 0-.6-.1-1.1-.2-1.6H12z"/>
+          </svg>
+          Continue with Google
+        </button>
+        <div id="google-note" class="muted" style="font-size:12px;margin-top:6px;display:none">
+          Google sign-in needs <span class="mono">GOOGLE_CLIENT_ID</span> + <span class="mono">GOOGLE_CLIENT_SECRET</span> in your env.
+        </div>
+
+        <div class="auth-divider"><span>or</span></div>
+
+        <form id="login-form" autocomplete="on">
+          <label class="field" style="margin-bottom:14px">
+            <span class="field-label">Email</span>
+            <input type="email" id="email" class="input" autocomplete="email" required>
+          </label>
+          <label class="field" style="margin-bottom:14px">
+            <span class="field-label">Password</span>
+            <input type="password" id="password" class="input" autocomplete="current-password" required>
+          </label>
+          <div style="margin:0 0 18px;text-align:right">
+            <a href="/forgot-password" style="font-size:12.5px;color:var(--ink-mute);text-decoration:underline;text-underline-offset:2px">Forgot password?</a>
+          </div>
+          <button class="btn btn-primary" id="submit" style="width:100%" type="submit">Sign in</button>
+        </form>
+
+        <div class="auth-foot muted">
+          New to CardTax? <a href="/signup">Create an account</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="auth-footer muted">
+      <span>© <span id="year"></span> CardTax</span>
+      <span><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a> · <a href="/pricing">Pricing</a></span>
+    </footer>
+  </div>
+
+  <script>
+    // Theme init (match the rest of the app)
+    (function () {
+      const saved = localStorage.getItem("cardtax-theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (saved === "dark" || (saved !== "light" && prefersDark)) {
+        document.documentElement.classList.add("dark");
+      }
+    })();
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    function showError(msg) {
+      const b = document.getElementById("error-banner");
+      b.textContent = msg;
+      b.style.display = "block";
+    }
+    function clearError() {
+      document.getElementById("error-banner").style.display = "none";
+    }
+
+    // Surface query-string errors from Google OAuth callback
+    const params = new URLSearchParams(window.location.search);
+    const errCode = params.get("error");
+    if (errCode) {
+      const msg = {
+        google_not_configured: "Google sign-in isn't set up on this server yet. Use email + password instead.",
+        google_exchange_failed: "Google sign-in failed. Please try again.",
+        state_mismatch: "Google sign-in session expired. Please try again.",
+        missing_code: "Google sign-in was cancelled.",
+        google_missing_fields: "Google didn't return an email. Try a different sign-in method.",
+      }[errCode] || "Sign-in failed. Please try again.";
+      showError(msg);
+    }
+
+    // Check whether Google OAuth is configured; show a hint if not
+    fetch("/api/auth/google/configured").then(r => r.json()).then(d => {
+      const btn = document.getElementById("google-btn");
+      const note = document.getElementById("google-note");
+      if (!d.configured) {
+        btn.disabled = true;
+        btn.style.opacity = "0.6";
+        btn.style.cursor = "not-allowed";
+        note.style.display = "block";
+      }
+    }).catch(() => {});
+
+    document.getElementById("google-btn").addEventListener("click", () => {
+      window.location.href = "/auth/google/start";
+    });
+
+    document.getElementById("login-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      clearError();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const btn = document.getElementById("submit");
+      btn.disabled = true; btn.textContent = "Signing in…";
+      try {
+        const r = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        if (!r.ok) {
+          const t = await r.json().catch(() => ({}));
+          throw new Error(t.detail || "Invalid email or password.");
+        }
+        if (typeof window.gtagEvent === "function") window.gtagEvent("login", { method: "password" });
+        const next = new URLSearchParams(window.location.search).get("next") || "/dashboard";
+        window.location.href = next;
+      } catch (err) {
+        showError(err.message || "Sign-in failed.");
+        btn.disabled = false; btn.textContent = "Sign in";
+      }
+    });
+  </script>
+</body>
+</html>

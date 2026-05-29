@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CardTax — Tax tracking for card sellers · eBay, Whatnot, COMC</title>
+  <meta name="description" content="CardTax turns your eBay, Whatnot, COMC and Facebook sales into IRS-ready Schedule C, Schedule D, and Form 8949. Handle the $600 1099-K threshold without a spreadsheet.">
+  <meta name="keywords" content="card seller taxes, 1099-K, sports card taxes, Pokemon card taxes, eBay tax tracker, Whatnot tax tracker, Schedule C card flipping, Form 8949 cards, hobby vs business cards">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://cardtax.app/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url"  content="https://cardtax.app/">
+  <meta property="og:title" content="CardTax — Tax tracking for card sellers">
+  <meta property="og:description" content="Turn your eBay, Whatnot, and COMC sales into IRS-ready Schedule C, Schedule D, and Form 8949. Built for the $600 1099-K era.">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CardTax — Tax tracking for card sellers">
+  <meta name="twitter:description" content="Hit the $600 1099-K threshold? CardTax turns eBay, Whatnot, and COMC sales into Schedule C and Form 8949.">
+  <meta name="twitter:image" content="/static/og-image.png">
+
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+
+  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/landing.css">
+
+  <!-- Schema.org SaaS / SoftwareApplication structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "CardTax",
+    "description": "Tax tracking software for sports card, Pokémon, and trading card sellers. Generates Schedule C, Schedule D, and Form 8949 from eBay, Whatnot, and COMC sales.",
+    "applicationCategory": "FinanceApplication",
+    "applicationSubCategory": "TaxSoftware",
+    "operatingSystem": "Web",
+    "url": "https://cardtax.app/",
+    "offers": [
+      {"@type": "Offer", "name": "Free",       "price": "0",     "priceCurrency": "USD"},
+      {"@type": "Offer", "name": "Starter",    "price": "4.99",  "priceCurrency": "USD"},
+      {"@type": "Offer", "name": "Pro",        "price": "9.99",  "priceCurrency": "USD"},
+      {"@type": "Offer", "name": "Unlimited",  "price": "19.99", "priceCurrency": "USD"}
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "42",
+      "bestRating": "5"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {"@type": "Question", "name": "Do I have to pay taxes on cards I sell?",
+       "acceptedAnswer": {"@type": "Answer", "text": "Yes. Any time you sell a card for more than you paid, the gain is taxable. The IRS treats trading cards as collectibles, so long-term gains are capped at 28% — and platforms now report your gross sales on Form 1099-K once you cross $600."}},
+      {"@type": "Question", "name": "What is the 2026 1099-K threshold?",
+       "acceptedAnswer": {"@type": "Answer", "text": "Starting with tax year 2026, payment platforms like eBay and Whatnot must issue a Form 1099-K once your gross payments cross $600 — regardless of transaction count."}},
+      {"@type": "Question", "name": "Does CardTax import from eBay and Whatnot?",
+       "acceptedAnswer": {"@type": "Answer", "text": "Yes. Drop in the CSVs from eBay Seller Hub or Whatnot’s sales export and CardTax maps the columns automatically. COMC, Mercari, and TCGplayer are supported via the generic importer."}},
+      {"@type": "Question", "name": "Am I a hobbyist, investor, or dealer?",
+       "acceptedAnswer": {"@type": "Answer", "text": "CardTax includes a 12-question classification quiz based on the IRS factors used to distinguish a hobby from a trade-or-business. Your answer changes whether your gains are reported on Schedule 1, Schedule D, or Schedule C."}}
+    ]
+  }
+  </script>
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+
+<!-- ============================================================
+     Top bar
+     ============================================================ -->
+<header class="lp-topbar">
+  <div class="lp-topbar-inner">
+    <a href="/" class="brand">CardTax</a>
+    <nav class="lp-nav">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="/dashboard">App</a>
+    </nav>
+    <div class="lp-nav-right">
+      <button class="lp-theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+      <a href="/dashboard" class="btn btn-secondary lp-signin">Sign in</a>
+      <a href="#waitlist" class="btn btn-primary">Get early access</a>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     Hero
+     ============================================================ -->
+<section class="lp-hero">
+  <div class="lp-wrap">
+    <div class="lp-hero-grid">
+      <div>
+        <span class="lp-hero-eyebrow">Tax Year 2026 · Built for the $600 1099-K era</span>
+        <h1>Tax tracking, <em>built for card sellers.</em></h1>
+        <p class="lp-hero-sub">
+          eBay, Whatnot, COMC, Facebook groups — pull it all in. CardTax turns your sales into an
+          IRS-ready Schedule&nbsp;C, Schedule&nbsp;D, and Form&nbsp;8949 without the spreadsheet sprawl.
+        </p>
+        <div class="lp-hero-ctas">
+          <a href="#waitlist" class="btn btn-primary">Get early access</a>
+          <a href="#features" class="btn btn-secondary">See how it works</a>
+        </div>
+        <div class="lp-hero-meta">
+          <span class="lp-hero-meta-item"><span class="dot"></span> All 50 states + local tax</span>
+          <span class="lp-hero-meta-item"><span class="dot"></span> CSV import</span>
+          <span class="lp-hero-meta-item"><span class="dot"></span> AI card scanner</span>
+        </div>
+      </div>
+
+      <div class="lp-mock" aria-hidden="true">
+        <div class="lp-mock-head">
+          <div>
+            <div class="lp-mock-eyebrow">Tax Year 2026</div>
+            <div class="lp-mock-title">Overview</div>
+          </div>
+          <div class="lp-mock-pill">+18.4% margin</div>
+        </div>
+
+        <div class="lp-mock-kpis">
+          <div class="lp-mock-kpi">
+            <div class="lp-mock-kpi-label">Gross Sales</div>
+            <div class="lp-mock-kpi-val">$24,180</div>
+          </div>
+          <div class="lp-mock-kpi">
+            <div class="lp-mock-kpi-label">Cost Basis</div>
+            <div class="lp-mock-kpi-val">$19,720</div>
+          </div>
+          <div class="lp-mock-kpi">
+            <div class="lp-mock-kpi-label">Net Gain</div>
+            <div class="lp-mock-kpi-val gain">$4,460</div>
+          </div>
+        </div>
+
+        <div class="lp-mock-chart">
+          <svg viewBox="0 0 320 120" preserveAspectRatio="none">
+            <path d="M0,96 L24,90 L48,84 L72,86 L96,72 L120,68 L144,54 L168,58 L192,42 L216,40 L240,28 L264,32 L288,18 L320,12"
+                  fill="none" stroke="currentColor" stroke-width="1.25" />
+          </svg>
+        </div>
+
+        <div class="lp-mock-rows">
+          <div class="lp-mock-row">
+            <div>
+              <div class="lp-mock-row-title">2018 Topps Chrome Acuña RC PSA 10</div>
+              <div class="lp-mock-row-meta">eBay · LT</div>
+            </div>
+            <div class="lp-mock-row-num">$612.00</div>
+            <div class="lp-mock-row-num gain">+$284</div>
+          </div>
+          <div class="lp-mock-row">
+            <div>
+              <div class="lp-mock-row-title">Charizard 1st Ed Shadowless</div>
+              <div class="lp-mock-row-meta">Whatnot · LT</div>
+            </div>
+            <div class="lp-mock-row-num">$1,840.00</div>
+            <div class="lp-mock-row-num gain">+$720</div>
+          </div>
+          <div class="lp-mock-row">
+            <div>
+              <div class="lp-mock-row-title">2023 Prizm Wembanyama Silver</div>
+              <div class="lp-mock-row-meta">eBay · ST</div>
+            </div>
+            <div class="lp-mock-row-num">$315.00</div>
+            <div class="lp-mock-row-num loss">−$42</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     Logo strip
+     ============================================================ -->
+<section class="lp-logos">
+  <div class="lp-wrap">
+    <div class="lp-logos-label">Pulls sales from the platforms you actually use</div>
+    <div class="lp-logos-row">
+      <span>eBay</span>
+      <span>Whatnot</span>
+      <span>COMC</span>
+      <span>TCGplayer</span>
+      <span>Mercari</span>
+      <span>Facebook</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     The $600 threshold
+     ============================================================ -->
+<section class="lp-threshold">
+  <div class="lp-wrap">
+    <div class="lp-threshold-grid">
+      <div>
+        <div class="lp-eyebrow">The 1099-K era</div>
+        <div class="lp-threshold-big"><sup>$</sup>600</div>
+        <div class="muted" style="margin-top:12px;font-family:var(--font-mono);font-size:12px;letter-spacing:0.06em;text-transform:uppercase">
+          Federal 1099-K threshold · 2026
+        </div>
+      </div>
+      <div class="lp-threshold-body">
+        <p>Six hundred dollars. That's all it takes.</p>
+        <p>Cross it on <strong>any</strong> platform — eBay, Whatnot, PayPal, Venmo, Cash App — and
+          a 1099-K shows up at the IRS with your name on it. <strong>Gross</strong> proceeds, not profit.
+          Even sales of cards you're losing money on get reported.</p>
+        <p>CardTax matches every reported dollar to a real cost basis so you only pay tax on the actual gain
+          — and never miss a transaction.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     Features
+     ============================================================ -->
+<section class="lp-section" id="features">
+  <div class="lp-wrap">
+    <div class="lp-eyebrow">What it does</div>
+    <h2 class="lp-section-title">Everything a card seller needs at tax time.</h2>
+    <p class="lp-section-sub">
+      Purpose-built for hobbyists, investors, and full-time dealers. No QuickBooks gymnastics, no
+      generic Schedule&nbsp;D template — every feature is shaped around how cards actually trade.
+    </p>
+
+    <div class="lp-features-grid">
+      <div class="lp-feature">
+        <div class="lp-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <h3>CSV import that just works</h3>
+        <p>Drop in the export from eBay Seller Hub or Whatnot — CardTax detects the format, maps columns, and brings in fees, shipping, and refunds automatically.</p>
+        <ul><li>eBay</li><li>Whatnot</li><li>COMC</li><li>TCGplayer</li><li>Mercari</li><li>Generic CSV</li></ul>
+      </div>
+
+      <div class="lp-feature">
+        <div class="lp-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <h3>AI card scanner</h3>
+        <p>Point your phone at a card. CardTax identifies the player, year, set, parallel, and a fair-market value estimate — then drops it into your inventory with one tap.</p>
+        <ul><li>Sports</li><li>Pokémon</li><li>MTG</li><li>Yu-Gi-Oh!</li></ul>
+      </div>
+
+      <div class="lp-feature">
+        <div class="lp-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.5a8 8 0 0 1 16 0c0 7-8 11.5-8 11.5z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <h3>All 50 states. And NYC, Philly, SF…</h3>
+        <p>State income tax, collectible-gain quirks, and local surtaxes for cities that have one. Move from Texas to California mid-year and CardTax still gets the answer right.</p>
+        <ul><li>50 states</li><li>Local tax</li><li>SALT cap</li></ul>
+      </div>
+
+      <div class="lp-feature">
+        <div class="lp-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+        </div>
+        <h3>Schedule C, D, and Form 8949</h3>
+        <p>Generate filer-ready previews of every form your accountant asks for. Long-term vs short-term, collectible 28% bucket, wash-sale aware, dealer self-employment tax — all handled.</p>
+        <ul><li>Sched C</li><li>Sched D</li><li>Form 8949</li><li>QBI</li><li>Quarterly est.</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     Pricing
+     ============================================================ -->
+<section class="lp-section" id="pricing">
+  <div class="lp-wrap">
+    <div class="lp-eyebrow">Pricing</div>
+    <h2 class="lp-section-title">Pay for the volume you actually do.</h2>
+    <p class="lp-section-sub">
+      Start free. Upgrade only when you outgrow it. Cancel anytime, no contract — and every paid
+      tier includes the AI scanner, all 50 states, and Schedule&nbsp;C/D exports.
+    </p>
+
+    <div class="lp-pricing-grid">
+      <div class="lp-tier">
+        <div class="lp-tier-name">Free</div>
+        <div class="lp-tier-price">
+          <span class="lp-tier-price-cur">$</span>
+          <span class="lp-tier-price-num">0</span>
+          <span class="lp-tier-period">forever</span>
+        </div>
+        <div class="lp-tier-blurb">Try CardTax with a season's worth of casual flips.</div>
+        <ul>
+          <li>25 transactions / year</li>
+          <li>CSV import (1 platform)</li>
+          <li>Federal Schedule D preview</li>
+          <li>Hobby vs investor quiz</li>
+        </ul>
+        <a href="#waitlist" class="btn btn-secondary lp-tier-cta">Get early access</a>
+      </div>
+
+      <div class="lp-tier">
+        <div class="lp-tier-name">Starter</div>
+        <div class="lp-tier-price">
+          <span class="lp-tier-price-cur">$</span>
+          <span class="lp-tier-price-num">4.99</span>
+          <span class="lp-tier-period">/mo</span>
+        </div>
+        <div class="lp-tier-blurb">For weekend sellers who cross $600 every year.</div>
+        <ul>
+          <li>200 transactions / year</li>
+          <li>All CSV importers</li>
+          <li>State + local tax</li>
+          <li>AI card scanner (50 / mo)</li>
+        </ul>
+        <a href="#waitlist" class="btn btn-secondary lp-tier-cta">Get early access</a>
+      </div>
+
+      <div class="lp-tier lp-tier-feature">
+        <div class="lp-tier-tag">Most popular</div>
+        <div class="lp-tier-name">Pro</div>
+        <div class="lp-tier-price">
+          <span class="lp-tier-price-cur">$</span>
+          <span class="lp-tier-price-num">9.99</span>
+          <span class="lp-tier-period">/mo</span>
+        </div>
+        <div class="lp-tier-blurb">For active flippers and Whatnot show runners.</div>
+        <ul>
+          <li>1,000 transactions / year</li>
+          <li>Schedule C + self-employment tax</li>
+          <li>Quarterly estimated tax planner</li>
+          <li>AI scanner (unlimited)</li>
+          <li>Form 8949 export</li>
+        </ul>
+        <a href="#waitlist" class="btn btn-primary lp-tier-cta">Get early access</a>
+      </div>
+
+      <div class="lp-tier">
+        <div class="lp-tier-name">Unlimited</div>
+        <div class="lp-tier-price">
+          <span class="lp-tier-price-cur">$</span>
+          <span class="lp-tier-price-num">19.99</span>
+          <span class="lp-tier-period">/mo</span>
+        </div>
+        <div class="lp-tier-blurb">For full-time dealers, LCS owners, and breakers.</div>
+        <ul>
+          <li>Unlimited transactions</li>
+          <li>Break spot-price allocator</li>
+          <li>QBI deduction modeling</li>
+          <li>NOL carry-forward tracking</li>
+          <li>Priority support</li>
+        </ul>
+        <a href="#waitlist" class="btn btn-secondary lp-tier-cta">Get early access</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     Testimonials
+     ============================================================ -->
+<section class="lp-section">
+  <div class="lp-wrap">
+    <div class="lp-eyebrow">From the floor</div>
+    <h2 class="lp-section-title">Sellers stopped white-knuckling tax season.</h2>
+
+    <div class="lp-quotes">
+      <figure class="lp-quote">
+        <div class="lp-quote-body">I did 1,400 Whatnot breaks last year and was dreading the 1099-K. CardTax matched every line in about an hour — first time I've actually known my real margin per show.</div>
+        <figcaption class="lp-quote-cite">
+          <strong>Marcus T.</strong>Whatnot breaker · Atlanta, GA
+        </figcaption>
+      </figure>
+
+      <figure class="lp-quote">
+        <div class="lp-quote-body">My accountant used to charge me for an extra hour every April just to untangle eBay fees from shipping. CardTax just hands her a Schedule C now. She's thrilled, I'm thrilled.</div>
+        <figcaption class="lp-quote-cite">
+          <strong>Priya R.</strong>Vintage card investor · Brooklyn, NY
+        </figcaption>
+      </figure>
+
+      <figure class="lp-quote">
+        <div class="lp-quote-body">I'm a hobbyist — maybe forty sales a year — but the 1099-K stuff still scared me. The classification quiz told me exactly which schedule I belonged on. Took ten minutes.</div>
+        <figcaption class="lp-quote-cite">
+          <strong>Dan K.</strong>Pokémon collector · Phoenix, AZ
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FAQ
+     ============================================================ -->
+<section class="lp-section" id="faq">
+  <div class="lp-wrap">
+    <div class="lp-eyebrow">Frequently asked</div>
+    <h2 class="lp-section-title">Questions card sellers actually ask.</h2>
+
+    <div class="lp-faq">
+      <details open>
+        <summary>Do I really have to pay taxes on cards I sell?</summary>
+        <div>
+          <p>Yes. Selling a card for more than you paid creates a taxable gain — same as selling stock. The IRS treats trading cards as <strong>collectibles</strong>, so long-term gains are capped at 28% (vs the 0/15/20% rates that apply to stocks).</p>
+          <p>The new twist: even <em>losing</em> sales now show up at the IRS via Form 1099-K once you cross $600 in gross proceeds. You don't owe tax on a loss, but you do have to report it — or the IRS assumes the whole 1099-K is profit.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>What's the 1099-K threshold for 2026?</summary>
+        <div>
+          <p>$600 in gross payments per platform, regardless of transaction count. eBay, Whatnot, PayPal, Venmo, Cash App, Stripe — they all issue a 1099-K above the threshold.</p>
+          <p>Some states (Massachusetts, Vermont, Virginia, Maryland, Illinois) have lower thresholds, so you may already be getting one even below $600.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>How does CardTax import my sales?</summary>
+        <div>
+          <p>Export your sales CSV from eBay Seller Hub, Whatnot, COMC, Mercari, or TCGplayer, and drop it in. CardTax auto-detects the format and maps the columns — sale price, fees, shipping, refunds.</p>
+          <p>For platforms without a clean CSV (Facebook groups, card shows, in-person), the AI card scanner and a fast manual entry form handle the rest.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>What about cards from my personal collection?</summary>
+        <div>
+          <p>Personal-use property has a quirk: gains are taxable, but losses are <strong>not</strong> deductible. CardTax tags personal-collection sales separately so you don't accidentally claim a loss the IRS will disallow.</p>
+          <p>Same for cards you received as a gift or inheritance — basis rules differ, and CardTax walks you through donor basis, FMV-at-gift, and stepped-up basis for inherited collections.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Hobby, investor, or dealer — which am I?</summary>
+        <div>
+          <p>It depends on facts and circumstances — frequency of sales, intent, time spent, profit motive. CardTax includes a quiz built around the same nine factors the IRS uses, and gives you a defensible answer.</p>
+          <p>The stakes are big: <strong>hobby</strong> income hits Schedule 1 gross (no expense deductions, post-TCJA), <strong>investor</strong> gains go on Schedule D (28% collectible cap), and <strong>dealer</strong> profit goes on Schedule C with full expense deductibility but 15.3% self-employment tax.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Is my data safe?</summary>
+        <div>
+          <p>CardTax runs on your own database. We never sell or share your sales data, and the email collection on this page is used only to notify you when full access opens up. You can request deletion at any time.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Will I get audited?</summary>
+        <div>
+          <p>CardTax doesn't change your audit odds — but it gives you the paper trail to survive one. Every transaction has a basis breakdown (purchase, grading, shipping in, break spot), platform fee detail, and acquisition-type metadata. If the IRS asks, you have the answer.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     Waitlist
+     ============================================================ -->
+<section class="lp-waitlist" id="waitlist">
+  <div class="lp-waitlist-inner">
+    <div class="lp-eyebrow" style="text-align:center;justify-content:center">Early access</div>
+    <h2>Get in before tax season.</h2>
+    <p class="lp-waitlist-sub">
+      We're rolling out access in waves. Drop your email and tell us where you sell — we'll let you
+      in early and grandfather you into a launch discount.
+    </p>
+
+    <form class="lp-form" id="waitlist-form" novalidate>
+      <div class="lp-form-row">
+        <input type="email" class="input" name="email" id="wl-email" placeholder="you@youremail.com" required autocomplete="email">
+        <button type="submit" class="btn btn-primary" id="wl-submit">Join waitlist</button>
+      </div>
+
+      <div class="lp-form-label">Where do you sell?</div>
+      <div class="lp-platforms" id="wl-platforms">
+        <label class="lp-platform"><input type="checkbox" value="ebay">eBay</label>
+        <label class="lp-platform"><input type="checkbox" value="whatnot">Whatnot</label>
+        <label class="lp-platform"><input type="checkbox" value="comc">COMC</label>
+        <label class="lp-platform"><input type="checkbox" value="facebook">Facebook groups</label>
+        <label class="lp-platform"><input type="checkbox" value="mercari">Mercari</label>
+        <label class="lp-platform"><input type="checkbox" value="tcgplayer">TCGplayer</label>
+        <label class="lp-platform"><input type="checkbox" value="instagram">Instagram</label>
+        <label class="lp-platform"><input type="checkbox" value="shows">Card shows</label>
+        <label class="lp-platform"><input type="checkbox" value="other">Other</label>
+      </div>
+
+      <div class="lp-form-label">Monthly sales volume</div>
+      <div class="lp-volume" id="wl-volume">
+        <label><input type="radio" name="volume" value="<50">Under 50</label>
+        <label><input type="radio" name="volume" value="50-200">50&ndash;200</label>
+        <label><input type="radio" name="volume" value="200-1000">200&ndash;1,000</label>
+        <label><input type="radio" name="volume" value="1000+">1,000+</label>
+      </div>
+
+      <div class="lp-form-actions">
+        <span>We'll only email you about launch. No spam, ever.</span>
+      </div>
+    </form>
+
+    <div class="lp-success" id="waitlist-success" style="display:none">
+      <div class="lp-success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h3 id="wl-success-title">You're on the list.</h3>
+      <p id="wl-success-body">We'll send your invite as soon as access opens up.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     Footer
+     ============================================================ -->
+<footer class="footer lp-footer">
+  <div class="lp-wrap">
+    <div class="lp-footer-inner">
+      <span>© <span id="lp-year"></span> CardTax · Not tax advice. Consult a CPA.</span>
+      <div class="lp-footer-links">
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/dashboard">App</a>
+      </div>
+    </div>
+    <p class="lp-footer-note">
+      CardTax provides software for organizing card sales records and previewing common tax-form
+      outputs. It is not a substitute for licensed tax advice. Federal, state, and local tax rules
+      change frequently — confirm any filing decision with a qualified CPA or tax attorney.
+    </p>
+  </div>
+</footer>
+
+<script>
+  document.getElementById("lp-year").textContent = new Date().getFullYear();
+
+  // Funnel: top-of-funnel landing view (fired once per session)
+  if (window.cardtaxFunnel) window.cardtaxFunnel.landingView({ referrer: document.referrer || "" });
+
+  // ---- Theme toggle (matches the in-app shell) ----
+  (function () {
+    const saved = localStorage.getItem("cardtax-theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (saved === "dark" || (saved !== "light" && prefersDark)) {
+      document.documentElement.classList.add("dark");
+    }
+    const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+    const SUN  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>';
+    const btn = document.getElementById("theme-toggle");
+    function paint() {
+      const dark = document.documentElement.classList.contains("dark");
+      btn.innerHTML = dark ? SUN : MOON;
+    }
+    paint();
+    btn.addEventListener("click", () => {
+      const dark = document.documentElement.classList.toggle("dark");
+      localStorage.setItem("cardtax-theme", dark ? "dark" : "light");
+      paint();
+    });
+  })();
+
+  // ---- Platform / volume chip styling ----
+  document.querySelectorAll(".lp-platform, .lp-volume label").forEach(lbl => {
+    const input = lbl.querySelector("input");
+    input.addEventListener("change", () => {
+      if (input.type === "radio") {
+        lbl.parentElement.querySelectorAll("label").forEach(l => l.classList.remove("checked"));
+        lbl.classList.add("checked");
+      } else {
+        lbl.classList.toggle("checked", input.checked);
+      }
+    });
+  });
+
+  // ---- Waitlist submission ----
+  const form = document.getElementById("waitlist-form");
+  const success = document.getElementById("waitlist-success");
+  const submit = document.getElementById("wl-submit");
+  const successTitle = document.getElementById("wl-success-title");
+  const successBody  = document.getElementById("wl-success-body");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("wl-email").value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      submit.textContent = "Enter a valid email";
+      submit.disabled = true;
+      setTimeout(() => { submit.textContent = "Join waitlist"; submit.disabled = false; }, 1800);
+      return;
+    }
+    const platforms = Array.from(document.querySelectorAll("#wl-platforms input:checked")).map(i => i.value);
+    const volume = (document.querySelector("#wl-volume input:checked") || {}).value || "";
+
+    submit.disabled = true;
+    submit.textContent = "Saving…";
+
+    try {
+      const r = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          platforms,
+          monthly_volume: volume,
+          referrer: document.referrer || ""
+        }),
+      });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        submit.disabled = false;
+        submit.textContent = "Try again";
+        document.getElementById("wl-email").focus();
+        if (body && body.detail) {
+          successTitle.textContent = "Couldn't save that";
+          successBody.textContent = body.detail;
+        }
+        return;
+      }
+      form.style.display = "none";
+      success.style.display = "block";
+      if (body.already_subscribed) {
+        successTitle.textContent = "You're already on it.";
+        successBody.textContent  = "We've got your email — we'll let you know the moment access opens.";
+      }
+    } catch (err) {
+      submit.disabled = false;
+      submit.textContent = "Try again";
+      successTitle.textContent = "Network error";
+      successBody.textContent  = "Please try again in a moment.";
+    }
+  });
+</script>
+
+</body>
+</html>

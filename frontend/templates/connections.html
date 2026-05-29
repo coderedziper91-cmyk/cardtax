@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connections · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Link eBay and upload other marketplace CSVs.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="Marketplace connections">
+  <meta property="og:description" content="Link eBay and upload other marketplace CSVs.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Marketplace connections">
+  <meta name="twitter:description" content="Link eBay and upload other marketplace CSVs.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .conn-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: start;
+      padding: 26px 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .conn-row:last-child { border-bottom: none; }
+    .conn-row:first-child { padding-top: 0; }
+    .conn-name {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .conn-kind {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mute);
+      padding: 2px 6px;
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+    }
+    .conn-desc {
+      font-size: 13.5px;
+      color: var(--ink-soft);
+      margin-top: 8px;
+      max-width: 64ch;
+      line-height: 1.55;
+    }
+    .conn-meta {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--ink-mute);
+    }
+    .conn-meta strong { color: var(--ink); font-weight: 500; }
+    .conn-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .conn-status {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 2px;
+    }
+    .conn-status.connected { background: var(--gain-soft); color: var(--gain); }
+    .conn-status.expired   { background: var(--warn-soft); color: var(--warn); }
+    .conn-status.idle      { background: var(--paper-alt); color: var(--ink-mute); border: 1px solid var(--rule); }
+    .conn-guide {
+      margin-top: 14px;
+      background: var(--paper-alt);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+    }
+    .conn-guide ol { margin: 6px 0 0; padding-left: 22px; }
+    .conn-guide li { font-size: 13px; color: var(--ink-soft); line-height: 1.7; }
+    .file-row { display:flex; gap:8px; align-items:center; margin-top: 8px; flex-wrap: wrap; }
+    .file-row input[type=file] { font-size: 12.5px; color: var(--ink-soft); max-width: 240px; }
+    @media (max-width: 720px) {
+      .conn-row { grid-template-columns: 1fr; }
+      .conn-actions { align-items: flex-start; }
+    }
+  </style>
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("connections");
+    const content = document.getElementById("page-content");
+
+    const PLATFORM_ICONS = {
+      ebay: '🏷', whatnot: '📺', comc: '📦', myslabs: '🪪',
+      tcgplayer: '🎴', mercari: '🟧', facebook: '👥',
+    };
+
+    function fmtSyncTime(iso) {
+      if (!iso) return "—";
+      const dt = new Date(iso);
+      const diff = (Date.now() - dt.getTime()) / 1000;
+      if (diff < 60) return "just now";
+      if (diff < 3600) return Math.floor(diff/60) + " min ago";
+      if (diff < 86400) return Math.floor(diff/3600) + "h ago";
+      return dt.toLocaleString("en-US", { month:"short", day:"numeric", hour:"numeric", minute:"2-digit" });
+    }
+
+    function statusBadge(p) {
+      const c = p.connection;
+      if (!c) return `<span class="conn-status idle">Not connected</span>`;
+      const s = c.status || "connected";
+      const label = s === "connected" ? "Connected"
+                  : s === "expired"   ? "Reconnect needed"
+                  : "Error";
+      return `<span class="conn-status ${s}">${label}</span>`;
+    }
+
+    async function load() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("connected") === "ebay") {
+        toast("eBay account connected", "success");
+        history.replaceState({}, "", "/connections");
+      } else if (params.get("error")) {
+        toast("eBay connection failed: " + params.get("error"), "error");
+        history.replaceState({}, "", "/connections");
+      }
+
+      const data = await api("GET", "/api/integrations");
+      renderHeader(data);
+      renderPlatforms(data);
+      const hist = await api("GET", "/api/integrations/history");
+      renderHistory(hist.history);
+    }
+
+    function renderHeader(data) {
+      const connected = data.platforms.filter(p => p.connection).length;
+      const noneConnected = connected === 0 && totalTx(data) === 0;
+      const emptyHero = noneConnected ? `
+        <div class="empty" style="margin-bottom:48px">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </div>
+          <div class="empty-title">Connect your first marketplace</div>
+          <div class="empty-sub">Link eBay for auto-syncing every paid order, or pick a CSV-only marketplace below to upload your sales export.</div>
+        </div>
+      ` : "";
+      content.innerHTML = `
+        ${emptyHero}
+        <div class="page-header">
+          <div>
+            <div class="title">Connections</div>
+            <div class="subtitle">Pull sales directly from each marketplace, or follow the steps to export and upload manually. Connected accounts sync orders, fees, and buyer-state info for sales tax nexus.</div>
+          </div>
+          <div class="page-header-actions">
+            <a class="btn btn-secondary btn-sm" href="/upload">Generic CSV import</a>
+          </div>
+        </div>
+
+        <div class="kpi-row" style="margin-bottom:48px">
+          <div class="kpi">
+            <div class="kpi-label">Connected</div>
+            <div class="kpi-value">${connected}</div>
+            <div class="kpi-sub">of ${data.platforms.length} supported platforms</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">eBay API</div>
+            <div class="kpi-value" style="font-size:22px">${data.ebay_configured ? "Configured" : "Setup needed"}</div>
+            <div class="kpi-sub">${data.ebay_configured ? "OAuth ready" : "Set EBAY_CLIENT_ID / EBAY_CLIENT_SECRET"}</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Last sync</div>
+            <div class="kpi-value" style="font-size:22px">${lastSyncSummary(data)}</div>
+            <div class="kpi-sub">Across all connected accounts</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Imported rows</div>
+            <div class="kpi-value">${totalTx(data)}</div>
+            <div class="kpi-sub">All-time, all platforms</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Marketplaces</div>
+              <div class="section-sub">Card-seller platforms supported today. Click connect or follow the export steps.</div>
+            </div>
+          </div>
+          <div class="card" id="platforms"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Import history</div>
+              <div class="section-sub">Recent CSV uploads and OAuth syncs.</div>
+            </div>
+          </div>
+          <div id="history"></div>
+        </div>
+      `;
+    }
+
+    function lastSyncSummary(data) {
+      const times = data.platforms
+        .map(p => p.connection?.last_sync_at)
+        .filter(Boolean)
+        .map(s => new Date(s).getTime());
+      if (!times.length) return "—";
+      const newest = Math.max(...times);
+      return fmtSyncTime(new Date(newest).toISOString());
+    }
+    function totalTx(data) {
+      return data.platforms.reduce((s,p) => s + (p.transaction_count||0), 0);
+    }
+
+    function renderPlatforms(data) {
+      const root = document.getElementById("platforms");
+      root.innerHTML = data.platforms.map(p => renderPlatform(p, data)).join("");
+
+      // Wire actions
+      document.querySelectorAll("[data-action]").forEach(btn => {
+        btn.addEventListener("click", () => handleAction(btn.dataset.action, btn.dataset.platform, btn));
+      });
+      document.querySelectorAll("[data-csv-platform]").forEach(input => {
+        input.addEventListener("change", e => csvImport(e.target.dataset.csvPlatform, e.target.files[0]));
+      });
+    }
+
+    function renderPlatform(p, data) {
+      const c = p.connection;
+      const icon = PLATFORM_ICONS[p.key] || "•";
+      let actions = "";
+      if (p.kind === "oauth") {
+        if (c) {
+          actions = `
+            <button class="btn btn-primary btn-sm" data-action="sync" data-platform="${p.key}">Sync now</button>
+            <button class="btn btn-danger btn-sm" data-action="disconnect" data-platform="${p.key}">Disconnect</button>
+          `;
+        } else {
+          const disabled = !data.ebay_configured ? "disabled title='Configure EBAY_CLIENT_ID first'" : "";
+          actions = `<button class="btn btn-primary btn-sm" data-action="connect" data-platform="${p.key}" ${disabled}>Connect ${p.name}</button>`;
+        }
+      } else if (p.kind === "csv") {
+        actions = `
+          <label class="btn btn-secondary btn-sm" style="cursor:pointer">
+            Upload CSV
+            <input type="file" accept=".csv" data-csv-platform="${p.key}" style="display:none">
+          </label>
+        `;
+      } else {
+        actions = `<a class="btn btn-ghost btn-sm" href="/transactions">Add manually</a>`;
+      }
+
+      const guideHtml = (p.guide && p.guide.length) ? `
+        <details class="conn-guide" ${c ? "" : "open"}>
+          <summary class="eyebrow" style="cursor:pointer">Export instructions</summary>
+          <ol>${p.guide.map(s => `<li>${s}</li>`).join("")}</ol>
+          ${p.guide_url ? `<div style="margin-top:8px;font-size:12.5px"><a href="${p.guide_url}" target="_blank" rel="noopener" style="text-decoration:underline">Official ${p.name} help →</a></div>` : ""}
+        </details>` : "";
+
+      return `
+        <div class="conn-row">
+          <div>
+            <div class="conn-name">
+              <span style="font-size:18px">${icon}</span>
+              ${p.name}
+              <span class="conn-kind">${p.kind === "oauth" ? "API" : p.kind === "csv" ? "CSV" : "Manual"}</span>
+            </div>
+            <div class="conn-desc">${p.description}</div>
+            <div class="conn-meta">
+              <span>Transactions: <strong>${p.transaction_count}</strong></span>
+              ${c ? `<span>Last sync: <strong>${fmtSyncTime(c.last_sync_at)}</strong></span>` : ""}
+              ${c ? `<span>Pulled last run: <strong>${c.last_sync_count||0}</strong></span>` : ""}
+              ${c && c.last_sync_error ? `<span class="loss">${escHtml(c.last_sync_error)}</span>` : ""}
+            </div>
+            ${guideHtml}
+          </div>
+          <div class="conn-actions">
+            ${statusBadge(p)}
+            ${actions}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderHistory(rows) {
+      const root = document.getElementById("history");
+      if (!rows || !rows.length) {
+        root.innerHTML = `
+          <div class="empty">
+            <div class="empty-title">No imports yet</div>
+            <div class="empty-sub">Connect a marketplace above or upload a CSV — each run appears here.</div>
+          </div>`;
+        return;
+      }
+      root.innerHTML = `
+        <div class="card card-flush">
+          <div class="table-wrap">
+            <table class="table table-compact">
+              <thead><tr>
+                <th>When</th><th>Platform</th><th>Source</th>
+                <th class="num">Imported</th><th class="num">Duplicates</th>
+                <th>Status</th><th>Notes</th>
+              </tr></thead>
+              <tbody>
+                ${rows.map(r => `
+                  <tr>
+                    <td>${fmtSyncTime(r.started_at)}</td>
+                    <td>${r.platform}</td>
+                    <td class="muted">${r.source}</td>
+                    <td class="num">${r.created || 0}</td>
+                    <td class="num muted">${r.skipped || 0}</td>
+                    <td>${r.status === "ok"
+                        ? '<span class="badge badge-gain">ok</span>'
+                        : '<span class="badge badge-loss">error</span>'}</td>
+                    <td class="muted" style="font-size:12.5px">${r.message || ""}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    async function handleAction(action, platform, btn) {
+      if (action === "connect") {
+        try {
+          const r = await api("GET", "/api/integrations/ebay/start");
+          if (typeof window.gtagEvent === "function") {
+            window.gtagEvent("ebay_connect_start", { platform });
+          }
+          window.location.href = r.url;
+        } catch (e) {
+          toast(apiErrorMessage(e, "Could not start eBay OAuth"), "error");
+        }
+      } else if (action === "disconnect") {
+        const ok = await confirmModal({
+          title: `Disconnect ${platform}?`,
+          message: "We'll stop syncing new orders. Past imports stay in your transactions.",
+          confirmLabel: "Disconnect",
+          danger: true,
+        });
+        if (!ok) return;
+        const restore = setBtnLoading(btn, "Disconnecting…");
+        try {
+          await api("DELETE", `/api/integrations/${platform}`);
+          toast("Disconnected", "success");
+          load();
+        } catch (e) {
+          toast(apiErrorMessage(e, "Disconnect failed"), "error");
+          restore();
+        }
+      } else if (action === "sync") {
+        const restore = setBtnLoading(btn, "Syncing…");
+        try {
+          const r = await api("POST", `/api/integrations/${platform}/sync`, { days: 90 });
+          const skipMsg = r.skipped ? ` (${r.skipped} duplicates skipped)` : "";
+          toast(`Synced — ${r.created} new${skipMsg}`, "success");
+          load();
+        } catch (e) {
+          toast(apiErrorMessage(e, "Sync failed"), "error");
+          restore();
+        }
+      }
+    }
+
+    async function csvImport(platform, file) {
+      if (!file) return;
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("platform", platform);
+      const status = toast(`Uploading ${platform} CSV…`, "info");
+      try {
+        const r = await fetch("/api/integrations/csv-import", { method: "POST", body: fd });
+        if (r.status === 401) { window.location.href = "/login"; return; }
+        const d = await r.json();
+        if (!r.ok) {
+          toast(d.detail || "Import failed", "error");
+        } else if (d.created === 0) {
+          toast(d.message || "No rows parsed", "error");
+        } else {
+          const skipMsg = d.skipped ? ` · ${d.skipped} duplicates skipped` : "";
+          toast(`Imported ${d.created} rows${skipMsg}`, "success");
+        }
+        load();
+      } catch (e) {
+        toast("Import failed", "error");
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

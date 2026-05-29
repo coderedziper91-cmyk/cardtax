@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin sign in · CardTax</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="auth-shell">
+    <header class="auth-topbar">
+      <a href="/" class="brand">CardTax</a>
+      <span class="muted" style="font-size:13px">Admin console</span>
+    </header>
+
+    <main class="auth-main">
+      <div class="auth-card">
+        <h1 class="auth-title">Admin sign in</h1>
+        <p class="auth-sub">Sign in with your admin-flagged CardTax account.</p>
+
+        <div id="error-banner" class="note note-danger" style="display:none;margin-bottom:18px"></div>
+
+        <form id="login-form" autocomplete="on">
+          <label class="field" style="margin-bottom:14px">
+            <span class="field-label">Email</span>
+            <input type="email" id="email" class="input" autocomplete="email" required>
+          </label>
+          <label class="field" style="margin-bottom:18px">
+            <span class="field-label">Password</span>
+            <input type="password" id="password" class="input" autocomplete="current-password" required>
+          </label>
+          <button class="btn btn-primary" id="submit" style="width:100%" type="submit">Sign in</button>
+        </form>
+
+        <div class="auth-foot muted" style="font-size:12.5px;margin-top:18px">
+          API access? <a href="/admin">/admin</a> also accepts the legacy <span class="mono">CARDTAX_ADMIN_TOKEN</span> header.
+        </div>
+      </div>
+    </main>
+
+    <footer class="auth-footer muted">
+      <span>© <span id="year"></span> CardTax</span>
+      <span><a href="/login">Back to user sign-in</a></span>
+    </footer>
+  </div>
+
+  <script src="/static/shared.js"></script>
+  <script>
+    (function () {
+      const saved = localStorage.getItem("cardtax-theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (saved === "dark" || (saved !== "light" && prefersDark)) {
+        document.documentElement.classList.add("dark");
+      }
+    })();
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    function showError(msg) {
+      const b = document.getElementById("error-banner");
+      b.textContent = msg;
+      b.style.display = "block";
+    }
+
+    document.getElementById("login-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const btn = document.getElementById("submit");
+      btn.disabled = true; btn.textContent = "Signing in…";
+      try {
+        await ctxFetchJSON("/api/admin/login", { method: "POST", body: JSON.stringify({ email, password }) });
+        window.location.href = "/admin";
+      } catch (err) {
+        showError(apiErrorMessage(err, "Sign-in failed."));
+        btn.disabled = false; btn.textContent = "Sign in";
+      }
+    });
+  </script>
+</body>
+</html>

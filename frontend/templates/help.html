@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Help center · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Frequently asked questions about taxes on card sales — 1099-K, cost basis, FIFO, Schedule C, and more.">
+  <link rel="canonical" href="https://cardtax.app/help">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="CardTax Help Center">
+  <meta property="og:description" content="Searchable FAQ for card-sale taxes.">
+  <meta property="og:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("help");
+    document.getElementById("page-content").innerHTML = `
+      <div style="max-width:780px">
+        <div class="page-header">
+          <div>
+            <div class="eyebrow">Help center</div>
+            <div class="title" style="margin-top:8px">Common questions, answered</div>
+            <div class="subtitle">Search the questions our chat widget answers automatically. Don't see what you need? Use the chat bubble in the corner to message the team.</div>
+          </div>
+        </div>
+
+        <div class="help-search">
+          <div class="search" style="max-width:none">
+            <span class="search-icon">${ICONS.search}</span>
+            <input class="input" id="help-search" placeholder="Search questions — try '1099', 'FIFO', or 'donation'">
+          </div>
+        </div>
+
+        <div class="help-list" id="help-list">
+          <div class="muted" style="padding:24px 0;text-align:center"><span class="spinner"></span> Loading…</div>
+        </div>
+      </div>
+    `;
+
+    function esc(s) {
+      return String(s || "").replace(/[&<>"']/g, c =>
+        ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;" })[c]);
+    }
+
+    let ENTRIES = [];
+
+    function render(filter) {
+      const q = (filter || "").toLowerCase().trim();
+      const list = document.getElementById("help-list");
+      const filtered = q
+        ? ENTRIES.filter(e =>
+            e.question.toLowerCase().includes(q) ||
+            e.answer.toLowerCase().includes(q))
+        : ENTRIES;
+      if (!filtered.length) {
+        list.innerHTML = `
+          <div class="empty" style="border:0">
+            <div class="empty-title">No matches</div>
+            <div class="empty-sub">Try a different keyword, or click the chat bubble to ask the team.</div>
+          </div>`;
+        return;
+      }
+      list.innerHTML = filtered.map((e, i) => `
+        <div class="help-item" data-i="${i}">
+          <button class="help-question" type="button">${esc(e.question)}</button>
+          <div class="help-answer">${esc(e.answer)}</div>
+        </div>
+      `).join("");
+      list.querySelectorAll(".help-item").forEach(el => {
+        el.querySelector(".help-question").addEventListener("click", () => el.classList.toggle("open"));
+      });
+    }
+
+    fetch("/api/help/entries").then(r => r.json()).then(d => {
+      ENTRIES = d.entries || [];
+      render("");
+    }).catch(() => {
+      document.getElementById("help-list").innerHTML = `
+        <div class="empty"><div class="empty-title">Couldn't load FAQ</div><div class="empty-sub">Try refreshing.</div></div>`;
+    });
+
+    document.getElementById("help-search").addEventListener("input", e => render(e.target.value));
+  </script>
+</body>
+</html>

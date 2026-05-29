@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Settings · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Tax year, filing status, state and locality, classification.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="Settings">
+  <meta property="og:description" content="Tax year, filing status, state and locality, classification.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Settings">
+  <meta name="twitter:description" content="Tax year, filing status, state and locality, classification.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("settings");
+    const content = document.getElementById("page-content");
+    content.innerHTML = `
+      <div style="max-width:720px">
+        <div class="page-header">
+          <div>
+            <div class="title">Settings</div>
+            <div class="subtitle">Drives your federal, state, and local tax calculations.</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header"><div class="card-title">Filing</div></div>
+          <div class="grid grid-2">
+            <label class="field"><span class="field-label">Tax year</span>
+              <select id="tax_year" class="select">
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+              </select></label>
+            <label class="field"><span class="field-label">Filing status</span>
+              <select id="filing_status" class="select">
+                <option value="single">Single</option>
+                <option value="mfj">Married filing jointly</option>
+                <option value="mfs">Married filing separately</option>
+                <option value="hoh">Head of household</option>
+              </select></label>
+            <label class="field"><span class="field-label">State</span>
+              <select id="state" class="select"><option value="">— select —</option></select>
+              <span class="field-help" id="state-note"></span>
+              <span class="field-error" id="err-state"></span></label>
+            <label class="field"><span class="field-label">City / locality (optional)</span>
+              <select id="city" class="select"><option value="">— no local tax —</option></select>
+              <span class="field-help" id="city-note"></span></label>
+            <label class="field"><span class="field-label">Other ordinary income ($)</span>
+              <input type="number" step="100" id="ordinary_income_estimate" class="input">
+              <span class="field-error" id="err-income"></span></label>
+            <label class="field"><span class="field-label">Classification</span>
+              <select id="classification" class="select">
+                <option value="hobby">Hobby</option>
+                <option value="investor">Investor</option>
+                <option value="dealer">Dealer / business</option>
+              </select>
+              <span class="field-help">Not sure? Take the <a href="/quiz">classification quiz</a>. <span id="classification-tip"></span></span></label>
+            <label class="field"><span class="field-label">Lot accounting method <span id="lot-tip"></span></span>
+              <select id="lot_method" class="select">
+                <option value="fifo">FIFO</option>
+                <option value="lifo">LIFO</option>
+                <option value="specific_id">Specific ID</option>
+              </select></label>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header"><div class="card-title">Quarterly estimated tax</div></div>
+          <div class="grid grid-2">
+            <label class="field"><span class="field-label">Prior-year total federal tax ($)</span><input type="number" step="100" id="prior_year_tax" class="input"></label>
+            <label class="field"><span class="field-label">Prior-year AGI ($)</span><input type="number" step="100" id="prior_year_agi" class="input"></label>
+            <label class="field"><span class="field-label">Current-year withholding so far ($)</span><input type="number" step="100" id="withholding_paid" class="input"></label>
+            <label class="field"><span class="field-label">Existing NOL carryforward ($)</span><input type="number" step="100" id="nol_carryforward" class="input"></label>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header"><div class="card-title">Kiddie tax (Form 8615)</div></div>
+          <div class="grid grid-2">
+            <div class="checkbox-row">
+              <input type="checkbox" id="is_kiddie_filer">
+              <label for="is_kiddie_filer">This return is for a dependent under 24</label>
+            </div>
+            <label class="field"><span class="field-label">Parent's marginal federal rate</span>
+              <select id="parent_marginal_rate" class="select">
+                <option value="0.10">10%</option><option value="0.12">12%</option>
+                <option value="0.22">22%</option><option value="0.24">24%</option>
+                <option value="0.32">32%</option><option value="0.35">35%</option>
+                <option value="0.37">37%</option>
+              </select></label>
+          </div>
+        </div>
+
+        <div style="margin-bottom:24px">
+          <button class="btn btn-primary" id="save">Save settings</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title" style="color:var(--danger)">Danger zone</div></div>
+          <p class="muted" style="font-size:13px;margin:0 0 12px">Permanently delete all transactions. This cannot be undone.</p>
+          <button id="delete-all" class="btn btn-danger">Delete all transactions</button>
+        </div>
+      </div>
+    `;
+
+    // Inject tooltips for tax jargon
+    document.getElementById("lot-tip").innerHTML = tt(TAX_TOOLTIPS.FIFO + " " + TAX_TOOLTIPS.LIFO);
+    document.getElementById("classification-tip").innerHTML = tt("Hobby = limited deductions. Investor = Schedule D capital gains. Dealer = Schedule C business income + self-employment tax.");
+
+    let STATES_DATA = [];
+
+    async function load() {
+      const [s, st] = await Promise.all([api("GET","/api/settings"), api("GET","/api/states")]);
+      STATES_DATA = st.states;
+      const stSel = document.getElementById("state");
+      STATES_DATA.forEach(s => {
+        const o = document.createElement("option"); o.value = s.code;
+        o.textContent = `${s.name}${!s.has_income_tax ? " — no tax" : ""}${s.special_collectibles ? " · special coll" : ""}`;
+        stSel.appendChild(o);
+      });
+
+      document.getElementById("tax_year").value = s.tax_year;
+      document.getElementById("filing_status").value = s.filing_status;
+      document.getElementById("state").value = s.state || "";
+      document.getElementById("ordinary_income_estimate").value = s.ordinary_income_estimate || "";
+      document.getElementById("classification").value = s.classification;
+      document.getElementById("lot_method").value = s.lot_method;
+      document.getElementById("prior_year_tax").value = s.prior_year_tax || "";
+      document.getElementById("prior_year_agi").value = s.prior_year_agi || "";
+      document.getElementById("withholding_paid").value = s.withholding_paid || "";
+      document.getElementById("nol_carryforward").value = s.nol_carryforward || "";
+      document.getElementById("is_kiddie_filer").checked = !!s.is_kiddie_filer;
+      document.getElementById("parent_marginal_rate").value = s.parent_marginal_rate || "0.22";
+
+      await loadCities(s.state, s.city);
+      updateStateNote();
+    }
+
+    async function loadCities(stateCode, preselect) {
+      const sel = document.getElementById("city");
+      sel.innerHTML = `<option value="">— no local tax —</option>`;
+      if (!stateCode) { updateCityNote(); return; }
+      const r = await api("GET", `/api/cities?state=${stateCode}`);
+      r.cities.forEach(c => {
+        const o = document.createElement("option");
+        o.value = c.key; o.textContent = c.city; o.dataset.desc = c.description;
+        sel.appendChild(o);
+      });
+      if (preselect) sel.value = preselect;
+      updateCityNote();
+    }
+
+    function updateStateNote() {
+      const code = document.getElementById("state").value;
+      const s = STATES_DATA.find(s => s.code === code);
+      const n = document.getElementById("state-note");
+      if (!s) { n.textContent = ""; return; }
+      const bits = [];
+      if (!s.has_income_tax) bits.push("No state income tax.");
+      else bits.push(`Top rate ${(s.top_rate*100).toFixed(2)}%.`);
+      if (s.special_collectibles) bits.push("Special collectibles rate.");
+      n.textContent = bits.join(" ");
+    }
+    function updateCityNote() {
+      const sel = document.getElementById("city");
+      const opt = sel.options[sel.selectedIndex];
+      document.getElementById("city-note").textContent = opt && opt.dataset && opt.dataset.desc ? opt.dataset.desc : "";
+    }
+    document.getElementById("state").addEventListener("change", e => { updateStateNote(); loadCities(e.target.value, ""); });
+    document.getElementById("city").addEventListener("change", updateCityNote);
+
+    function validateSettings() {
+      let ok = true;
+      const state = document.getElementById("state");
+      const sErr = document.getElementById("err-state");
+      if (!state.value) {
+        state.classList.add("invalid");
+        sErr.textContent = "Pick a state — local tax depends on it.";
+        ok = false;
+      } else {
+        state.classList.remove("invalid");
+        sErr.textContent = "";
+      }
+      const inc = document.getElementById("ordinary_income_estimate");
+      const iErr = document.getElementById("err-income");
+      if (inc.value !== "" && (isNaN(parseFloat(inc.value)) || parseFloat(inc.value) < 0)) {
+        inc.classList.add("invalid");
+        iErr.textContent = "Enter a non-negative number.";
+        ok = false;
+      } else {
+        inc.classList.remove("invalid");
+        iErr.textContent = "";
+      }
+      return ok;
+    }
+    ["state","ordinary_income_estimate"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("input", validateSettings);
+      if (el) el.addEventListener("change", validateSettings);
+    });
+
+    document.getElementById("save").addEventListener("click", async (e) => {
+      if (!validateSettings()) {
+        toast("Please fix the highlighted fields", "error");
+        return;
+      }
+      const btn = e.currentTarget;
+      const restore = setBtnLoading(btn, "Saving…");
+      const body = {
+        tax_year: parseInt(document.getElementById("tax_year").value),
+        filing_status: document.getElementById("filing_status").value,
+        state: document.getElementById("state").value,
+        city: document.getElementById("city").value,
+        ordinary_income_estimate: parseFloat(document.getElementById("ordinary_income_estimate").value) || 0,
+        classification: document.getElementById("classification").value,
+        lot_method: document.getElementById("lot_method").value,
+        prior_year_tax: parseFloat(document.getElementById("prior_year_tax").value) || 0,
+        prior_year_agi: parseFloat(document.getElementById("prior_year_agi").value) || 0,
+        withholding_paid: parseFloat(document.getElementById("withholding_paid").value) || 0,
+        nol_carryforward: parseFloat(document.getElementById("nol_carryforward").value) || 0,
+        is_kiddie_filer: document.getElementById("is_kiddie_filer").checked,
+        parent_marginal_rate: parseFloat(document.getElementById("parent_marginal_rate").value) || 0.22,
+      };
+      try {
+        await api("PUT", "/api/settings", body);
+        toast("Settings saved", "success");
+      } catch (err) {
+        toast(apiErrorMessage(err, "Save failed"), "error");
+      } finally {
+        restore();
+      }
+    });
+
+    document.getElementById("delete-all").addEventListener("click", async (e) => {
+      const ok = await confirmModal({
+        title: "Delete every transaction?",
+        message: "This permanently removes every transaction on your account. We can't undo it.",
+        confirmLabel: "Delete everything",
+        danger: true,
+      });
+      if (!ok) return;
+      const restore = setBtnLoading(e.currentTarget, "Deleting…");
+      try {
+        await api("DELETE", "/api/transactions");
+        toast("All transactions deleted", "success");
+      } catch (err) {
+        toast(apiErrorMessage(err, "Delete failed"), "error");
+      } finally {
+        restore();
+      }
+    });
+
+    load();
+  </script>
+</body>
+</html>

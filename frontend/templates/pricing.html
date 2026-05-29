@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pricing · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Free, Starter, Pro, and Unlimited tiers. Cancel anytime. Schedule C, Schedule D, Form 8949.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="CardTax pricing">
+  <meta property="og:description" content="Free, Starter, Pro, and Unlimited tiers. Cancel anytime. Schedule C, Schedule D, Form 8949.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CardTax pricing">
+  <meta name="twitter:description" content="Free, Starter, Pro, and Unlimited tiers. Cancel anytime. Schedule C, Schedule D, Form 8949.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("pricing");
+    const content = document.getElementById("page-content");
+    content.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="eyebrow">Pricing</div>
+          <div class="title" style="margin-top:8px">Plans that grow with your collection</div>
+          <div class="subtitle">Start free. Upgrade when you outgrow the limit. Cancel any time from the billing portal.</div>
+        </div>
+      </div>
+
+      <div id="banner" style="display:none" class="note" style="margin-bottom:24px"></div>
+
+      <div style="display:flex;justify-content:center">
+        <div class="billing-toggle" id="billing-cycle" role="tablist" aria-label="Billing cycle">
+          <button type="button" data-cycle="monthly" class="active" role="tab">Monthly</button>
+          <button type="button" data-cycle="yearly" role="tab">Yearly <span class="save-badge">Save 17%</span></button>
+        </div>
+      </div>
+
+      <div id="plans" class="grid grid-4" style="align-items:stretch"></div>
+
+      <div class="section" style="margin-top:64px">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Compare the details</div>
+            <div class="section-sub">Everything you get on each plan.</div>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="table" id="compare-table">
+            <thead>
+              <tr>
+                <th style="width:30%">Feature</th>
+                <th class="num">Free</th>
+                <th class="num">Starter</th>
+                <th class="num">Pro</th>
+                <th class="num">Unlimited</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Transactions per year</td><td class="num">25</td><td class="num">200</td><td class="num">1,000</td><td class="num">Unlimited</td></tr>
+              <tr><td>Federal + state + local tax</td><td class="num">✓</td><td class="num">✓</td><td class="num">✓</td><td class="num">✓</td></tr>
+              <tr><td>CSV import (eBay, Whatnot)</td><td class="num">✓</td><td class="num">✓</td><td class="num">✓</td><td class="num">✓</td></tr>
+              <tr><td>Hobby / Investor / Dealer quiz</td><td class="num">✓</td><td class="num">✓</td><td class="num">✓</td><td class="num">✓</td></tr>
+              <tr><td>Cost-basis components</td><td class="num">—</td><td class="num">✓</td><td class="num">✓</td><td class="num">✓</td></tr>
+              <tr><td>Quarterly estimated tax</td><td class="num">—</td><td class="num">✓</td><td class="num">✓</td><td class="num">✓</td></tr>
+              <tr><td>Loss-harvesting suggestions</td><td class="num">—</td><td class="num">—</td><td class="num">✓</td><td class="num">✓</td></tr>
+              <tr><td>Priority support</td><td class="num">—</td><td class="num">—</td><td class="num">✓</td><td class="num">✓</td></tr>
+              <tr><td>AI card scanner</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">✓</td></tr>
+              <tr><td>Form 8949 CSV export</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">✓</td></tr>
+              <tr><td>Schedule C dealer support</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">✓</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Questions</div>
+          </div>
+        </div>
+        <div class="grid grid-2">
+          <div>
+            <div class="action-item">
+              <div class="action-item-title">What counts as a "transaction"?</div>
+              <div class="action-item-detail">Each sale you record — whether imported from a CSV or added by hand. Donations and gifts count too. The limit applies to sales with a date in the current calendar year.</div>
+            </div>
+            <div class="action-item">
+              <div class="action-item-title">Can I downgrade or cancel?</div>
+              <div class="action-item-detail">Yes. Click "Manage billing" on your account page to open the Stripe billing portal. You'll keep paid features until the end of your billing period.</div>
+            </div>
+          </div>
+          <div>
+            <div class="action-item">
+              <div class="action-item-title">Is my data tax-advice grade?</div>
+              <div class="action-item-detail">CardTax produces estimates and previews. Final returns should be reviewed with a CPA. See <a href="/terms">terms</a>.</div>
+            </div>
+            <div class="action-item">
+              <div class="action-item-title">Do you offer team / multi-account?</div>
+              <div class="action-item-detail">Not yet. If you need this, reply to your receipt email after subscribing — we'll make it happen.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    let CYCLE = "monthly";
+
+    function planCard(t, current, stripeOk) {
+      const isCurrent = current && current === t.key;
+      const ctaLabel = isCurrent ? "Current plan" : t.cta;
+      const featured = t.badge ? ' style="border-color:var(--ink)"' : "";
+      const priceDisplay = CYCLE === "yearly"
+        ? (t.price_yearly_display || t.price_display)
+        : t.price_display;
+      const cadence = CYCLE === "yearly" ? " / year" : " / month";
+      const savings = (CYCLE === "yearly" && t.yearly_savings_pct)
+        ? `<div class="muted" style="font-size:11.5px;margin-top:4px;font-family:var(--font-mono);letter-spacing:0.04em">Save ${t.yearly_savings_pct}% vs monthly</div>` : "";
+      return `
+        <div class="card" ${featured}>
+          ${t.badge ? `<div class="eyebrow" style="color:var(--accent);margin-bottom:8px">${t.badge}</div>` : ""}
+          <div class="card-title">${t.name}</div>
+          <div class="num-display" style="font-size:34px;margin-top:8px">
+            ${priceDisplay}<span class="muted" style="font-family:var(--font-sans);font-size:13px;font-weight:400">${cadence}</span>
+          </div>
+          ${savings}
+          <div class="muted" style="font-size:13px;margin-top:6px;min-height:36px">${t.tagline}</div>
+          <div style="margin:16px 0;padding-top:16px;border-top:1px solid var(--rule)">
+            <div class="eyebrow" style="margin-bottom:10px">${t.transactions_per_year === null ? "Unlimited transactions" : t.transactions_per_year.toLocaleString() + " transactions / year"}</div>
+            <ul style="list-style:none;padding:0;margin:0;font-size:13px;line-height:1.7">
+              ${t.features.map(f => `<li>· ${f}</li>`).join("")}
+              ${(t.not_included || []).map(f => `<li class="muted" style="opacity:0.6">— ${f}</li>`).join("")}
+            </ul>
+          </div>
+          <button class="btn ${t.key === 'pro' ? 'btn-primary' : 'btn-secondary'}" style="width:100%"
+            data-tier="${t.key}" data-cycle="${CYCLE}" ${isCurrent ? "disabled" : ""}>
+            ${ctaLabel}
+          </button>
+          ${t.key !== 'free' && !stripeOk ? '<div class="muted" style="font-size:11.5px;margin-top:8px;text-align:center">Stripe keys required to subscribe</div>' : ""}
+        </div>
+      `;
+    }
+
+    function renderPlans(plans, me) {
+      const current = me ? me.subscription_tier : null;
+      const grid = document.getElementById("plans");
+      grid.innerHTML = plans.tiers.map(t => planCard(t, current, plans.stripe_configured)).join("");
+
+      grid.querySelectorAll("button[data-tier]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const tier = btn.dataset.tier;
+          if (!me) {
+            window.location.href = "/signup?next=/pricing";
+            return;
+          }
+          if (tier === "free") {
+            window.location.href = "/account";
+            return;
+          }
+          const restore = setBtnLoading(btn, "Redirecting…");
+          try {
+            const r = await api("POST", "/api/billing/checkout", { tier, cycle: CYCLE });
+            if (typeof window.gtagEvent === "function") {
+              window.gtagEvent("subscription_upgrade_start", { tier, cycle: CYCLE });
+            }
+            if (window.cardtaxFunnel) window.cardtaxFunnel.upgradeStart({ tier, cycle: CYCLE });
+            window.location.href = r.url;
+          } catch (e) {
+            let msg = e.message || "Checkout failed.";
+            try { msg = JSON.parse(msg.replace(/^\d+:\s*/, "")).detail || msg; } catch {}
+            toast(typeof msg === "string" ? msg : "Stripe not configured yet.", "error");
+            restore();
+          }
+        });
+      });
+    }
+
+    async function load() {
+      const plans = await api("GET", "/api/billing/plans");
+      let me = null;
+      try { me = await api("GET", "/api/auth/me"); } catch { /* anon */ }
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("checkout") === "cancelled") {
+        const b = document.getElementById("banner");
+        b.textContent = "Checkout was cancelled — no charge was made.";
+        b.style.display = "block";
+      }
+
+      renderPlans(plans, me);
+
+      // Cycle toggle
+      document.querySelectorAll("#billing-cycle button").forEach(b => {
+        b.addEventListener("click", () => {
+          CYCLE = b.dataset.cycle;
+          document.querySelectorAll("#billing-cycle button").forEach(x => x.classList.toggle("active", x === b));
+          renderPlans(plans, me);
+        });
+      });
+    }
+
+    load();
+  </script>
+</body>
+</html>

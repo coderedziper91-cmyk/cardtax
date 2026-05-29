@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Changelog · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="What we've shipped in CardTax — version history and recent changes.">
+  <link rel="canonical" href="https://cardtax.app/changelog">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="CardTax Changelog">
+  <meta property="og:description" content="What we've shipped in CardTax — version history.">
+  <meta property="og:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("changelog");
+
+    const ENTRIES = [
+      {
+        date: "2026-05-27",
+        title: "v1.3 · Polish, legal, and PWA",
+        items: [
+          "Cookie consent banner — Google Analytics only loads after Accept.",
+          "Tax disclaimer banner on every tax-summary page and PDF.",
+          "Toast notifications redesigned: stacked bottom-right, auto-dismiss after 4s.",
+          "Confirmation modals replacing native browser dialogs.",
+          "Inline form validation with password strength meter on signup.",
+          "Annual billing toggle on the pricing page (save 17%).",
+          "Transaction deduplication on CSV and eBay imports.",
+          "GDPR account deletion — wipe every record from your account.",
+          "Multi-year support: tax-year dropdown filters dashboard and transactions.",
+          "New pages: /blog, /help, /changelog, /refund-policy.",
+          "PWA manifest + service worker for offline app shell.",
+          "Print stylesheet for tax-summary PDFs.",
+          "Tax-jargon tooltips across the UI (FIFO, NIIT, collectibles, etc.).",
+        ],
+      },
+      {
+        date: "2026-04-12",
+        title: "v1.2 · Marketplace connections",
+        items: [
+          "Direct eBay OAuth integration with automatic order sync.",
+          "Whatnot, COMC, MySlabs, TCGplayer, Mercari CSV importers.",
+          "Generic CSV mapper for any platform.",
+          "Import history log surfacing every sync attempt.",
+        ],
+      },
+      {
+        date: "2026-03-04",
+        title: "v1.1 · Tax engine v2",
+        items: [
+          "Schedule C, Schedule D, and Form 8949 PDF generation.",
+          "Multi-state tax computation with locality lookups.",
+          "Quarterly estimated tax (Form 1040-ES) projection.",
+          "AMT (Form 6251) and QBI (§199A) calculations.",
+          "Self-employment tax for dealer classification.",
+          "Loss-harvesting suggestions.",
+        ],
+      },
+      {
+        date: "2026-01-15",
+        title: "v1.0 · Public launch",
+        items: [
+          "Editorial-style dashboard with portfolio chart and KPIs.",
+          "Inline-editable transactions table.",
+          "Hobby / Investor / Dealer classification quiz.",
+          "Federal + state + local tax estimates.",
+          "AI card scanner (Unlimited plan).",
+          "Stripe-backed Free / Starter / Pro / Unlimited tiers.",
+        ],
+      },
+    ];
+
+    const fmt = d => new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
+    document.getElementById("page-content").innerHTML = `
+      <div style="max-width:780px">
+        <div class="page-header">
+          <div>
+            <div class="eyebrow">Changelog</div>
+            <div class="title" style="margin-top:8px">What's new in CardTax</div>
+            <div class="subtitle">A running log of releases, features, and fixes. We ship often — check back for updates.</div>
+          </div>
+        </div>
+
+        <div>
+          ${ENTRIES.map(e => `
+            <div class="changelog-entry">
+              <div class="changelog-date">${fmt(e.date)}</div>
+              <div class="changelog-title">${e.title}</div>
+              <ul>${e.items.map(i => `<li>${i}</li>`).join("")}</ul>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  </script>
+</body>
+</html>

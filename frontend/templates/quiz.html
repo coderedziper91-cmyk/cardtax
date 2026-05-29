@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Classification · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Find out whether you should file as hobby, investor, or dealer.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="Hobby vs Dealer quiz">
+  <meta property="og:description" content="Find out whether you should file as hobby, investor, or dealer.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Hobby vs Dealer quiz">
+  <meta name="twitter:description" content="Find out whether you should file as hobby, investor, or dealer.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("quiz");
+    const content = document.getElementById("page-content");
+    content.innerHTML = `
+      <div style="max-width:720px">
+        <div class="page-header">
+          <div>
+            <div class="title">Classification</div>
+            <div class="subtitle">The IRC §183 nine-factor test determines whether you file Schedule 1 (hobby), Schedule D (investor), or Schedule C (dealer).</div>
+          </div>
+        </div>
+
+        <div id="quiz" style="display:flex;flex-direction:column;gap:10px"></div>
+
+        <div style="margin-top:24px;display:flex;gap:8px">
+          <button id="submit-btn" class="btn btn-primary">See classification</button>
+          <button id="reset-btn" class="btn btn-ghost">Reset</button>
+        </div>
+
+        <div id="result" class="card" style="margin-top:24px;display:none"></div>
+      </div>
+    `;
+
+    const answers = {};
+    let factors = [];
+
+    async function load() {
+      const d = await api("GET", "/api/quiz/factors");
+      factors = d.factors;
+      document.getElementById("quiz").innerHTML = factors.map((f, i) => `
+        <div class="card" data-fid="${f.id}" style="padding:16px 20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">${i+1} of ${factors.length}</div>
+              <div style="font-size:14px;line-height:1.5">${f.question}</div>
+            </div>
+            <div class="btn-group" style="flex-shrink:0">
+              <button class="btn btn-secondary btn-sm yes-btn">Yes</button>
+              <button class="btn btn-secondary btn-sm no-btn">No</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+
+      document.querySelectorAll("#quiz [data-fid]").forEach(card => {
+        const fid = card.dataset.fid;
+        const yes = card.querySelector(".yes-btn"), no = card.querySelector(".no-btn");
+        function setAnswer(v) {
+          answers[fid] = v;
+          if (v) {
+            yes.classList.remove("btn-secondary"); yes.classList.add("btn-primary");
+            no.classList.remove("btn-primary");   no.classList.add("btn-secondary");
+          } else {
+            no.classList.remove("btn-secondary");  no.classList.add("btn-primary");
+            yes.classList.remove("btn-primary"); yes.classList.add("btn-secondary");
+          }
+        }
+        yes.addEventListener("click", () => setAnswer(true));
+        no.addEventListener("click",  () => setAnswer(false));
+      });
+    }
+
+    document.getElementById("reset-btn").addEventListener("click", () => {
+      for (const k of Object.keys(answers)) delete answers[k];
+      document.querySelectorAll(".yes-btn, .no-btn").forEach(b => {
+        b.classList.remove("btn-primary"); b.classList.add("btn-secondary");
+      });
+      document.getElementById("result").style.display = "none";
+    });
+
+    document.getElementById("submit-btn").addEventListener("click", async () => {
+      for (const f of factors) if (!(f.id in answers)) answers[f.id] = false;
+      const d = await api("POST", "/api/quiz/submit", { answers });
+      const labelMap = { hobby: "Hobby", investor: "Investor", dealer: "Dealer / business" };
+      const r = document.getElementById("result");
+      r.style.display = "block";
+      r.innerHTML = `
+        <div class="eyebrow" style="margin-bottom:8px">Classification</div>
+        <div class="title" style="font-size:28px;margin-bottom:6px">${labelMap[d.classification]}</div>
+        <div class="muted" style="font-size:13px;margin-bottom:16px">${Math.round(d.score*100)}% business factors</div>
+        <div class="note">${d.explanation}</div>
+        <details style="margin-top:16px;font-size:13px">
+          <summary style="cursor:pointer;color:var(--text-secondary)">Factor-by-factor rationale</summary>
+          <ul class="mono muted" style="margin-top:10px;padding-left:18px">
+            ${d.rationale.map(r => `<li>${r}</li>`).join("")}
+          </ul>
+        </details>
+        <div class="muted" style="font-size:13px;margin-top:16px">Settings updated. <a href="/tax-summary">View tax summary</a></div>
+      `;
+      r.scrollIntoView({ behavior: "smooth" });
+    });
+    load();
+  </script>
+</body>
+</html>

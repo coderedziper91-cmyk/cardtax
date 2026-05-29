@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blog · CardTax — Tax guides for card sellers</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Plain-English tax guides for sports-card and trading-card sellers — 1099-K thresholds, FIFO vs LIFO, Schedule C, and more.">
+  <link rel="canonical" href="https://cardtax.app/blog">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="CardTax Blog">
+  <meta property="og:description" content="Plain-English tax guides for trading-card sellers.">
+  <meta property="og:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("blog");
+
+    const POSTS = [
+      {
+        slug: "do-i-need-to-pay-taxes-on-sports-card-sales",
+        title: "Do I Need to Pay Taxes on Sports Card Sales?",
+        excerpt: "Short answer: yes, almost always. Here's how the IRS treats card sales and why the new $600 1099-K threshold matters.",
+        date: "2026-05-01",
+        minutes: 4,
+      },
+      {
+        slug: "1099-k-threshold-for-card-sellers",
+        title: "Understanding the $600 1099-K Threshold for Card Sellers",
+        excerpt: "The federal threshold drops to $600 in 2026, and several states are already at $600. Here's what shows up on your 1099-K and how it lines up with your actual taxable gain.",
+        date: "2026-04-22",
+        minutes: 5,
+      },
+      {
+        slug: "fifo-vs-lifo-cost-basis",
+        title: "FIFO vs LIFO: Which Cost Basis Method Saves You the Most?",
+        excerpt: "FIFO is the IRS default. LIFO can produce smaller short-term gains in a rising market — but you need consistent records. Here's how to pick.",
+        date: "2026-04-15",
+        minutes: 5,
+      },
+    ];
+
+    const fmtPostDate = d => new Date(d).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
+    document.getElementById("page-content").innerHTML = `
+      <div style="max-width:780px">
+        <div class="page-header">
+          <div>
+            <div class="eyebrow">Guides</div>
+            <div class="title" style="margin-top:8px">CardTax Blog</div>
+            <div class="subtitle">Plain-English tax guides for sports-card, Pokémon, and trading-card sellers. Written by people who've imported their own 1099-K.</div>
+          </div>
+        </div>
+
+        <div class="blog-list">
+          ${POSTS.map(p => `
+            <article class="blog-card">
+              <div class="meta">${fmtPostDate(p.date)} · ${p.minutes} min read</div>
+              <h3><a href="/blog/${p.slug}">${p.title}</a></h3>
+              <p>${p.excerpt}</p>
+              <div style="margin-top:10px"><a href="/blog/${p.slug}" class="muted" style="font-size:13px;text-decoration:underline">Read article →</a></div>
+            </article>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  </script>
+</body>
+</html>

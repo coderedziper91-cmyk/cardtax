@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tools · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Mini-tools for card sellers — break spot allocator, etc.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="Tools">
+  <meta property="og:description" content="Mini-tools for card sellers — break spot allocator, etc.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tools">
+  <meta name="twitter:description" content="Mini-tools for card sellers — break spot allocator, etc.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("tools");
+    const content = document.getElementById("page-content");
+    content.innerHTML = `
+      <div style="max-width:880px">
+        <div class="page-header">
+          <div>
+            <div class="title">Tools</div>
+            <div class="subtitle">Mini calculators that don't require importing transactions.</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Break spot allocator</div>
+              <div class="tertiary" style="font-size:12.5px;margin-top:2px">Allocate basis across received cards proportional to FMV.</div>
+            </div>
+          </div>
+
+          <label class="field" style="max-width:200px"><span class="field-label">Spot price paid ($)</span>
+            <input id="spot" type="number" step="0.01" class="input" value="50">
+          </label>
+
+          <div style="margin-top:16px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+            <div style="overflow-x:auto"><table class="table table-compact">
+              <thead><tr><th>Card</th><th class="num">FMV at receipt</th><th class="num">Allocated basis</th><th></th></tr></thead>
+              <tbody id="cards-body"></tbody>
+            </table></div>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:14px;align-items:center">
+            <button class="btn btn-secondary" id="add-card">Add card</button>
+            <button class="btn btn-primary" id="calc">Calculate</button>
+            <span class="muted" style="font-size:13px" id="tot"></span>
+          </div>
+
+          <div class="note" style="margin-top:18px;font-size:12.5px">
+            <strong>Formula:</strong> <span class="mono">basis_i = spot × (fmv_i / Σfmv)</span>. When you sell a card later, use the allocated basis. Even split if FMVs total zero.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">§1031 like-kind exchange myth</div></div>
+          <p class="muted" style="font-size:13.5px;line-height:1.65;margin:0">
+            A common misconception: "I can swap one card for another without triggering tax under §1031." This is false. The TCJA (P.L. 115-97, §13303, effective 2018) limited §1031 to real property only. Every card-for-card trade is a fully taxable disposition at fair market value.
+          </p>
+        </div>
+      </div>
+    `;
+
+    let cards = [
+      { name: "Card 1", fmv: 100 },
+      { name: "Card 2", fmv: 30 },
+      { name: "Card 3", fmv: 20 },
+    ];
+
+    function renderCards(alloc) {
+      const body = document.getElementById("cards-body");
+      body.innerHTML = cards.map((c, i) => `
+        <tr>
+          <td><input class="inline-edit" data-i="${i}" data-k="name" value="${(c.name||"").replace(/"/g,"&quot;")}"></td>
+          <td class="num"><input class="inline-edit num" data-i="${i}" data-k="fmv" type="number" step="0.01" value="${c.fmv}"></td>
+          <td class="num" style="font-weight:500">${alloc ? fmt$(alloc[i].allocated_basis) : "—"}</td>
+          <td><button class="btn btn-ghost btn-sm delete-card" data-i="${i}">×</button></td>
+        </tr>
+      `).join("");
+      body.querySelectorAll("input.inline-edit").forEach(inp => {
+        inp.addEventListener("input", e => {
+          const i = +e.target.dataset.i, k = e.target.dataset.k;
+          cards[i][k] = k === "fmv" ? parseFloat(e.target.value) || 0 : e.target.value;
+        });
+      });
+      body.querySelectorAll(".delete-card").forEach(btn => {
+        btn.addEventListener("click", e => { cards.splice(+e.target.dataset.i, 1); renderCards(); });
+      });
+    }
+    document.getElementById("add-card").addEventListener("click", () => { cards.push({ name:`Card ${cards.length+1}`, fmv:0 }); renderCards(); });
+    document.getElementById("calc").addEventListener("click", async () => {
+      const spot = parseFloat(document.getElementById("spot").value) || 0;
+      const d = await api("POST", "/api/tools/break-allocate", { spot_price: spot, cards });
+      renderCards(d.allocations);
+      const sumB = d.allocations.reduce((a,b) => a + b.allocated_basis, 0);
+      document.getElementById("tot").textContent = `Total FMV ${fmt$(d.total_fmv)} · spot ${fmt$(d.spot_price)} · sum of bases ${fmt$(sumB)}`;
+    });
+    renderCards();
+  </script>
+</body>
+</html>

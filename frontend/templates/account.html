@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Account · CardTax</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Manage your plan, email, password, and exports.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CardTax">
+  <meta property="og:title" content="Account">
+  <meta property="og:description" content="Manage your plan, email, password, and exports.">
+  <meta property="og:image" content="/static/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Account">
+  <meta name="twitter:description" content="Manage your plan, email, password, and exports.">
+  <meta name="twitter:image" content="/static/og-image.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/analytics.js" defer></script>
+</head>
+<body>
+  <div id="app-shell"></div>
+  <script src="/static/shared.js"></script>
+  <script>
+    mountShell("account");
+    const content = document.getElementById("page-content");
+    content.innerHTML = `
+      <div style="max-width:780px">
+        <div class="page-header">
+          <div>
+            <div class="eyebrow">Account</div>
+            <div class="title" style="margin-top:8px">Billing & profile</div>
+            <div class="subtitle">Manage your plan, sign-in details, and usage.</div>
+          </div>
+        </div>
+
+        <div id="banner-success" class="note" style="display:none;margin-bottom:24px;border-left-color:var(--gain)"></div>
+
+        <!-- Plan -->
+        <div class="card" style="margin-bottom:24px">
+          <div class="card-header">
+            <div class="card-title">Current plan</div>
+            <div class="btn-group">
+              <a href="/pricing" class="btn btn-secondary btn-sm">Change plan</a>
+              <button id="portal-btn" class="btn btn-sm" style="display:none">Manage billing</button>
+            </div>
+          </div>
+          <div class="grid grid-3">
+            <div>
+              <div class="eyebrow">Plan</div>
+              <div class="num-display" style="font-size:24px;margin-top:6px" id="plan-name">—</div>
+              <div class="muted" style="font-size:13px;margin-top:4px" id="plan-status"></div>
+            </div>
+            <div>
+              <div class="eyebrow">Price</div>
+              <div class="num-display" style="font-size:24px;margin-top:6px" id="plan-price">—</div>
+              <div class="muted" style="font-size:13px;margin-top:4px" id="plan-renews"></div>
+            </div>
+            <div>
+              <div class="eyebrow" id="usage-label">Transactions this year</div>
+              <div class="num-display" style="font-size:24px;margin-top:6px" id="usage-text">—</div>
+              <div id="usage-bar-wrap" style="margin-top:10px;display:none">
+                <div style="height:4px;background:var(--rule);border-radius:2px;overflow:hidden">
+                  <div id="usage-bar" style="height:100%;background:var(--ink);width:0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="limit-warning" class="note note-warning" style="display:none;margin-top:18px"></div>
+          <div id="stripe-warning" class="note" style="display:none;margin-top:18px">
+            Stripe isn't configured yet. Set <span class="mono">STRIPE_SECRET_KEY</span> and price IDs in your environment to enable paid subscriptions.
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="card" style="margin-bottom:24px">
+          <div class="card-header"><div class="card-title">Email</div></div>
+          <form id="email-form">
+            <label class="field" style="margin-bottom:14px">
+              <span class="field-label">Email address</span>
+              <input type="email" id="email" class="input" required>
+            </label>
+            <div id="email-error" class="note note-danger" style="display:none;margin-bottom:12px"></div>
+            <button class="btn btn-primary" type="submit">Update email</button>
+          </form>
+        </div>
+
+        <!-- Password -->
+        <div class="card" style="margin-bottom:24px">
+          <div class="card-header"><div class="card-title">Password</div></div>
+          <div id="password-only-google" class="note" style="display:none;margin-bottom:14px">
+            You signed in with Google. Set a password below to also enable email + password sign-in.
+          </div>
+          <form id="password-form">
+            <label class="field" style="margin-bottom:14px" id="current-password-field">
+              <span class="field-label">Current password</span>
+              <input type="password" id="current-password" class="input" autocomplete="current-password">
+            </label>
+            <label class="field" style="margin-bottom:14px">
+              <span class="field-label">New password</span>
+              <input type="password" id="new-password" class="input" autocomplete="new-password" minlength="8" required>
+              <span class="field-help">At least 8 characters.</span>
+            </label>
+            <label class="field" style="margin-bottom:18px">
+              <span class="field-label">Confirm new password</span>
+              <input type="password" id="new-password2" class="input" autocomplete="new-password" minlength="8" required>
+            </label>
+            <div id="password-error" class="note note-danger" style="display:none;margin-bottom:12px"></div>
+            <button class="btn btn-primary" type="submit">Update password</button>
+          </form>
+        </div>
+
+        <!-- Email preferences -->
+        <div class="card" id="email-prefs" style="margin-bottom:24px">
+          <div class="card-header"><div class="card-title">Email preferences</div></div>
+          <p class="muted" style="font-size:13px;margin:-6px 0 16px">
+            Choose which CardTax emails land in your inbox. Security emails (like password resets) are always sent.
+          </p>
+          <div id="email-prefs-warning" class="note" style="display:none;margin-bottom:14px">
+            Email delivery isn't configured on this server yet. <span class="mono">SENDGRID_API_KEY</span> is unset, so we'll log preferences but won't actually send.
+          </div>
+          <label class="checkbox-row" style="margin-bottom:12px">
+            <input type="checkbox" id="pref-deadlines">
+            <div>
+              <div style="font-weight:500">Quarterly estimated-tax deadline reminders</div>
+              <div class="muted" style="font-size:12.5px;margin-top:2px">
+                A heads-up a few days before each IRS deadline (Apr 15, Jun 15, Sep 15, Jan 15).
+              </div>
+            </div>
+          </label>
+          <label class="checkbox-row" style="margin-bottom:12px">
+            <input type="checkbox" id="pref-subscription">
+            <div>
+              <div style="font-weight:500">Subscription confirmations</div>
+              <div class="muted" style="font-size:12.5px;margin-top:2px">
+                Receipt-style notes when your plan changes or renews.
+              </div>
+            </div>
+          </label>
+          <label class="checkbox-row" style="margin-bottom:18px">
+            <input type="checkbox" id="pref-digest">
+            <div>
+              <div style="font-weight:500">Weekly digest</div>
+              <div class="muted" style="font-size:12.5px;margin-top:2px">
+                A Monday summary of new transactions imported in the last 7 days.
+              </div>
+            </div>
+          </label>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="email-prefs-save">Save preferences</button>
+            <button class="btn btn-secondary" id="email-prefs-test">Send test email</button>
+          </div>
+          <div id="email-prefs-status" class="muted" style="font-size:12.5px;margin-top:10px"></div>
+        </div>
+
+        <!-- Data export -->
+        <div class="card" style="margin-bottom:24px">
+          <div class="card-header"><div class="card-title">Your data</div></div>
+          <p style="font-size:13.5px;margin:0 0 14px">
+            Download every transaction, setting, import log, and chat message we hold for your account
+            as a single ZIP. GDPR-friendly — this is everything.
+          </p>
+          <button class="btn btn-primary" id="export-btn">Export my data (.zip)</button>
+          <span id="export-status" class="muted" style="font-size:12.5px;margin-left:10px"></span>
+        </div>
+
+        <!-- Sign out -->
+        <div class="card" style="margin-bottom:24px">
+          <div class="card-header"><div class="card-title">Session</div></div>
+          <p class="muted" style="font-size:13.5px;margin:0 0 14px">Sign out on this device.</p>
+          <button id="logout-btn" class="btn btn-danger">Sign out</button>
+        </div>
+
+        <!-- Delete account -->
+        <div class="card" id="delete-account-card">
+          <div class="card-header"><div class="card-title" style="color:var(--loss)">Delete account</div></div>
+          <p style="font-size:13.5px;margin:0 0 14px">
+            Permanently delete your CardTax account and every transaction, setting, import log, and chat message we have for you.
+            We can't undo this — export your data first if you want a copy.
+          </p>
+          <div id="delete-account-pw-wrap" style="display:none">
+            <label class="field" style="margin-bottom:14px">
+              <span class="field-label">Confirm password</span>
+              <input type="password" id="delete-account-password" class="input" autocomplete="current-password">
+              <span class="field-help">We require your password before permanently deleting your account.</span>
+            </label>
+          </div>
+          <div class="btn-group">
+            <button id="delete-account-btn" class="btn btn-danger">Delete my account</button>
+            <span id="delete-account-status" class="muted" style="font-size:12.5px;align-self:center"></span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    function showSuccess(msg) {
+      const b = document.getElementById("banner-success");
+      b.textContent = msg;
+      b.style.display = "block";
+      setTimeout(() => { b.style.display = "none"; }, 4000);
+    }
+
+    async function loadAll() {
+      const [me, status] = await Promise.all([
+        api("GET", "/api/auth/me"),
+        api("GET", "/api/billing/status"),
+      ]);
+
+      // Banner from checkout
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("checkout") === "success") {
+        showSuccess("Subscription updated! Your plan will reflect any changes shortly.");
+        if (window.cardtaxFunnel) {
+          window.cardtaxFunnel.upgradeComplete({ tier: status.tier, status: status.subscription_status });
+        }
+      }
+
+      // Plan card
+      document.getElementById("plan-name").textContent = status.tier_name;
+      document.getElementById("plan-price").textContent = status.price_display + (status.tier === "free" ? "" : " / mo");
+      const stat = status.subscription_status;
+      const statLabel = {
+        active: "Active",
+        canceled: "Cancelled",
+        past_due: "Past due",
+        incomplete: "Incomplete",
+        trialing: "Trialing",
+      }[stat] || stat;
+      document.getElementById("plan-status").textContent = statLabel;
+      document.getElementById("plan-renews").textContent =
+        status.current_period_end ? "Renews " + fmtDate(status.current_period_end) : "";
+
+      const usageEl = document.getElementById("usage-text");
+      if (status.limit === null) {
+        usageEl.textContent = status.used.toLocaleString() + " · Unlimited";
+      } else {
+        usageEl.textContent = status.used.toLocaleString() + " / " + status.limit.toLocaleString();
+        const wrap = document.getElementById("usage-bar-wrap");
+        wrap.style.display = "block";
+        const pct = Math.min(100, Math.round((status.percent || 0) * 100));
+        const bar = document.getElementById("usage-bar");
+        bar.style.width = pct + "%";
+        if (status.percent >= 1) bar.style.background = "var(--loss)";
+        else if (status.percent >= 0.8) bar.style.background = "var(--warn)";
+
+        if (status.percent >= 1) {
+          const w = document.getElementById("limit-warning");
+          w.innerHTML = `You've reached your <strong>${status.tier_name}</strong> plan limit for ${status.year}. <a href="/pricing">Upgrade</a> to add more transactions.`;
+          w.style.display = "block";
+        } else if (status.percent >= 0.8) {
+          const w = document.getElementById("limit-warning");
+          w.innerHTML = `You're approaching your <strong>${status.tier_name}</strong> plan limit (${Math.round(status.percent * 100)}%). Consider <a href="/pricing">upgrading</a>.`;
+          w.style.display = "block";
+        }
+      }
+
+      if (!status.stripe_configured) {
+        document.getElementById("stripe-warning").style.display = "block";
+      }
+
+      // Manage billing portal button — only if user has a Stripe customer
+      if (status.stripe_configured && status.subscription_status !== "canceled" && status.tier !== "free") {
+        document.getElementById("portal-btn").style.display = "inline-flex";
+      }
+
+      // Email
+      document.getElementById("email").value = me.email || "";
+
+      // Password section — adjust if Google-only
+      if (!me.has_password && me.has_google) {
+        document.getElementById("password-only-google").style.display = "block";
+        document.getElementById("current-password-field").style.display = "none";
+      }
+    }
+
+    document.addEventListener("click", e => {
+      if (e.target.id === "portal-btn") {
+        const btn = e.target;
+        btn.disabled = true;
+        btn.textContent = "Opening…";
+        api("POST", "/api/billing/portal").then(r => {
+          window.location.href = r.url;
+        }).catch(err => {
+          toast("Couldn't open billing portal", "error");
+          btn.disabled = false;
+          btn.textContent = "Manage billing";
+        });
+      }
+    });
+
+    document.getElementById("email-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      const errBox = document.getElementById("email-error");
+      errBox.style.display = "none";
+      const btn = e.currentTarget.querySelector('button[type="submit"]');
+      const restore = setBtnLoading(btn, "Updating…");
+      try {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid email address.");
+        await api("PUT", "/api/auth/email", { email });
+        toast("Email updated", "success");
+        showSuccess("Email updated.");
+      } catch (err) {
+        let msg = err.message || "Failed.";
+        try { msg = JSON.parse(msg.replace(/^\d+:\s*/, "")).detail || msg; } catch {}
+        errBox.textContent = msg;
+        errBox.style.display = "block";
+      } finally {
+        restore();
+      }
+    });
+
+    document.getElementById("password-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const cur = document.getElementById("current-password").value;
+      const np = document.getElementById("new-password").value;
+      const np2 = document.getElementById("new-password2").value;
+      const errBox = document.getElementById("password-error");
+      errBox.style.display = "none";
+      if (np !== np2) { errBox.textContent = "Passwords don't match."; errBox.style.display = "block"; return; }
+      if (np.length < 8) { errBox.textContent = "Password must be at least 8 characters."; errBox.style.display = "block"; return; }
+      const btn = e.currentTarget.querySelector('button[type="submit"]');
+      const restore = setBtnLoading(btn, "Updating…");
+      try {
+        await api("PUT", "/api/auth/password", { current_password: cur, new_password: np });
+        toast("Password updated", "success");
+        showSuccess("Password updated.");
+        document.getElementById("password-form").reset();
+      } catch (err) {
+        let msg = err.message || "Failed.";
+        try { msg = JSON.parse(msg.replace(/^\d+:\s*/, "")).detail || msg; } catch {}
+        errBox.textContent = msg;
+        errBox.style.display = "block";
+      } finally {
+        restore();
+      }
+    });
+
+    document.getElementById("logout-btn").addEventListener("click", async (e) => {
+      const ok = await confirmModal({
+        title: "Sign out?",
+        message: "You'll need to enter your password again to come back.",
+        confirmLabel: "Sign out",
+      });
+      if (!ok) return;
+      const restore = setBtnLoading(e.currentTarget, "Signing out…");
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login";
+    });
+
+    // ---- Delete account ----
+    let _deleteAcctRequiresPw = true;
+    document.getElementById("delete-account-btn").addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      const pwWrap = document.getElementById("delete-account-pw-wrap");
+      const pwInput = document.getElementById("delete-account-password");
+      const statusEl = document.getElementById("delete-account-status");
+
+      const me = await api("GET", "/api/auth/me").catch(() => null);
+      _deleteAcctRequiresPw = !!(me && me.has_password);
+
+      // First click: show the password confirm + modal warning.
+      if (_deleteAcctRequiresPw && pwWrap.style.display === "none") {
+        pwWrap.style.display = "block";
+        statusEl.textContent = "Enter your password, then click again to confirm.";
+        pwInput.focus();
+        return;
+      }
+      const ok = await confirmModal({
+        title: "Permanently delete account?",
+        message: "Every transaction, setting, import log, and chat message will be erased. This cannot be undone.",
+        confirmLabel: "Delete forever",
+        danger: true,
+      });
+      if (!ok) return;
+      const restore = setBtnLoading(btn, "Deleting…");
+      try {
+        const body = _deleteAcctRequiresPw ? { password: pwInput.value } : {};
+        const r = await fetch("/api/auth/delete-account", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}));
+          throw new Error(j.detail || `Delete failed (${r.status})`);
+        }
+        toast("Your account has been deleted", "success");
+        setTimeout(() => { window.location.href = "/"; }, 800);
+      } catch (err) {
+        statusEl.textContent = err.message || "Delete failed.";
+        restore();
+      }
+    });
+
+    // ----- Email preferences -----
+    async function loadEmailPrefs() {
+      try {
+        const p = await api("GET", "/api/auth/email-prefs");
+        document.getElementById("pref-deadlines").checked = !!p.tax_deadlines;
+        document.getElementById("pref-subscription").checked = !!p.subscription;
+        document.getElementById("pref-digest").checked = !!p.weekly_digest;
+        if (!p.sendgrid_configured) {
+          document.getElementById("email-prefs-warning").style.display = "block";
+        }
+      } catch (e) { /* not signed in - shouldn't happen on this page */ }
+    }
+    document.getElementById("email-prefs-save").addEventListener("click", async () => {
+      const stat = document.getElementById("email-prefs-status");
+      stat.textContent = "Saving…";
+      try {
+        await api("PUT", "/api/auth/email-prefs", {
+          tax_deadlines: document.getElementById("pref-deadlines").checked,
+          subscription: document.getElementById("pref-subscription").checked,
+          weekly_digest: document.getElementById("pref-digest").checked,
+        });
+        stat.textContent = "Saved.";
+        toast("Email preferences saved", "success");
+        setTimeout(() => { stat.textContent = ""; }, 3000);
+      } catch (err) {
+        stat.textContent = "Couldn't save preferences.";
+      }
+    });
+    document.getElementById("email-prefs-test").addEventListener("click", async () => {
+      const stat = document.getElementById("email-prefs-status");
+      stat.textContent = "Sending test email…";
+      try {
+        const r = await api("POST", "/api/auth/email-prefs/test");
+        stat.textContent = r.sendgrid_configured
+          ? "Test sent. Check your inbox."
+          : "SendGrid isn't configured — test logged to the server console.";
+      } catch {
+        stat.textContent = "Couldn't send the test email.";
+      }
+    });
+
+    // ----- Data export -----
+    document.getElementById("export-btn").addEventListener("click", async () => {
+      const btn = document.getElementById("export-btn");
+      const stat = document.getElementById("export-status");
+      btn.disabled = true;
+      const orig = btn.textContent;
+      btn.textContent = "Preparing ZIP…";
+      stat.textContent = "";
+      try {
+        const r = await fetch("/api/account/export");
+        if (!r.ok) throw new Error("Export failed (" + r.status + ")");
+        const blob = await r.blob();
+        const cd = r.headers.get("Content-Disposition") || "";
+        const match = /filename="([^"]+)"/.exec(cd);
+        const filename = match ? match[1] : "cardtax-export.zip";
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+        stat.textContent = "Downloaded.";
+        if (typeof window.gtagEvent === "function") window.gtagEvent("data_export");
+      } catch (err) {
+        stat.textContent = "Export failed.";
+        toast("Export failed", "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
+      }
+    });
+
+    loadAll();
+    loadEmailPrefs();
+  </script>
+</body>
+</html>
