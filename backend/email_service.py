@@ -296,21 +296,20 @@ def next_deadline(today: date) -> tuple[str, date]:
 def send(to: str, subject: str, html: str, text: str = "") -> bool:
     """Send an email. Returns True on success.
 
-    If SENDGRID_API_KEY is not set, logs to console and returns True (treated as
-    success so the rest of the flow proceeds normally during dev).
+    If SENDGRID_API_KEY is not set, logs a warning and returns False so callers
+    can detect that no email actually went out (e.g. surface a dev-only link
+    instead).
     """
     if not to or "@" not in to:
         log.warning("email skipped — invalid 'to' address: %r", to)
         return False
 
     if not is_configured():
-        # Make this visible even with default Python logging (WARN+).
-        print(
-            f"[email:console-fallback] to={to} subject={subject!r}\n"
-            f"--- text ---\n{text or '(no text part)'}\n--- end ---",
-            flush=True,
+        log.warning(
+            "email not sent — SENDGRID_API_KEY not configured. to=%s subject=%r",
+            to, subject,
         )
-        return True
+        return False
 
     payload = {
         "personalizations": [{"to": [{"email": to}]}],

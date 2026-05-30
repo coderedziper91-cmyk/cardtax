@@ -42,7 +42,7 @@ def _build_engine():
         return create_engine(
             url,
             pool_size=5,
-            max_overflow=0,
+            max_overflow=10,
             pool_pre_ping=True,
             pool_recycle=1800,
             echo=False,

@@ -72,6 +72,9 @@ def verify_password(password: str, password_hash: Optional[str]) -> bool:
 
 
 def login_user(request: Request, user: User) -> None:
+    # Rotate the session on login to prevent session fixation. Drop any
+    # pre-login state and start fresh with just the authenticated user id.
+    request.session.clear()
     request.session["user_id"] = user.id
 
 
@@ -138,11 +141,17 @@ def create_user(
     google_sub: Optional[str] = None,
     email_verified: bool = False,
 ) -> User:
+    from sqlalchemy.exc import IntegrityError
+
     email = (email or "").strip().lower()
     if not email:
         raise HTTPException(400, "Email required")
+    # Generic message — don't leak account existence to unauthenticated callers.
+    _generic_signup_error = HTTPException(
+        400, "We couldn't create that account. Try signing in or resetting your password."
+    )
     if db.query(User).filter(User.email == email).first():
-        raise HTTPException(400, "An account with that email already exists")
+        raise _generic_signup_error
 
     user = User(
         email=email,
@@ -152,10 +161,14 @@ def create_user(
         subscription_tier="free",
         subscription_status="active",
     )
-    db.add(user)
-    db.flush()
-    db.add(TaxSettings(user_id=user.id))
-    db.commit()
+    try:
+        db.add(user)
+        db.flush()
+        db.add(TaxSettings(user_id=user.id))
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise _generic_signup_error
     db.refresh(user)
 
     # Initialize the security row. Google-OAuth signups are pre-verified

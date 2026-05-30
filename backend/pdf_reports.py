@@ -309,6 +309,23 @@ def _empty_note(text: str = "No transactions in this section.") -> Paragraph:
     return Paragraph(f"<i>{text}</i>", STYLES["small"])
 
 
+# Plain-English disclaimer shown at the bottom of every exported tax PDF.
+# Required for any document a user might attach to a return or share with a
+# preparer — CardTax produces estimates, not advice.
+_TAX_DISCLAIMER = (
+    "This document is for informational purposes only and does not constitute "
+    "tax, legal, or financial advice. Consult a qualified tax professional "
+    "before filing."
+)
+
+
+def _disclaimer_block() -> list:
+    return [
+        Spacer(1, 18),
+        Paragraph(f"<b>Disclaimer.</b> {_TAX_DISCLAIMER}", STYLES["small"]),
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Form 8949
 # ---------------------------------------------------------------------------
@@ -378,6 +395,7 @@ def build_form_8949_pdf(form_8949: dict, settings: dict) -> bytes:
         "Generated as a reference only. Verify all figures with a CPA before filing.",
         STYLES["small"],
     ))
+    story += _disclaimer_block()
 
     doc.build(story, onFirstPage=_on_page, onLaterPages=_on_page)
     return buf.getvalue()
@@ -461,6 +479,7 @@ def build_schedule_d_pdf(schedule_d: dict, summary: dict, settings: dict) -> byt
         "Excess capital losses carry forward indefinitely.",
         STYLES["small"],
     ))
+    story += _disclaimer_block()
 
     doc.build(story, onFirstPage=_on_page, onLaterPages=_on_page)
     return buf.getvalue()
@@ -535,6 +554,7 @@ def build_schedule_c_pdf(schedule_c: dict, se_tax: dict | None, summary: dict, s
         "Verify inventory and expense categorization with a CPA before filing.",
         STYLES["small"],
     ))
+    story += _disclaimer_block()
 
     doc.build(story, onFirstPage=_on_page, onLaterPages=_on_page)
     return buf.getvalue()
@@ -737,6 +757,7 @@ def build_tax_summary_pdf(
         f"Review with a CPA before filing.",
         STYLES["small"],
     ))
+    story += _disclaimer_block()
 
     doc.build(story, onFirstPage=_on_page, onLaterPages=_on_page)
     return buf.getvalue()

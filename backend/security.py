@@ -499,11 +499,10 @@ def admin_legacy_token() -> str:
 
 
 def request_admin_token(request: Request) -> str:
-    return (
-        request.headers.get("x-admin-token")
-        or request.query_params.get("token")
-        or ""
-    )
+    # Only accept the admin token from the X-Admin-Token header. Reading it from
+    # query params makes it trivially leak via referrers, browser history, and
+    # access logs.
+    return request.headers.get("x-admin-token") or ""
 
 
 def require_admin(request: Request, db: Session) -> None:

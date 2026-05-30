@@ -13,11 +13,11 @@
   <meta property="og:site_name" content="CardTax">
   <meta property="og:title" content="Marketplace connections">
   <meta property="og:description" content="Link eBay and upload other marketplace CSVs.">
-  <meta property="og:image" content="/static/og-image.png">
+  <meta property="og:image" content="https://cardtax.app/static/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Marketplace connections">
   <meta name="twitter:description" content="Link eBay and upload other marketplace CSVs.">
-  <meta name="twitter:image" content="/static/og-image.png">
+  <meta name="twitter:image" content="https://cardtax.app/static/og-image.png">
   <link rel="stylesheet" href="/static/app.css">
   <style>
     .conn-row {
@@ -276,8 +276,8 @@
       const guideHtml = (p.guide && p.guide.length) ? `
         <details class="conn-guide" ${c ? "" : "open"}>
           <summary class="eyebrow" style="cursor:pointer">Export instructions</summary>
-          <ol>${p.guide.map(s => `<li>${s}</li>`).join("")}</ol>
-          ${p.guide_url ? `<div style="margin-top:8px;font-size:12.5px"><a href="${p.guide_url}" target="_blank" rel="noopener" style="text-decoration:underline">Official ${p.name} help →</a></div>` : ""}
+          <ol>${p.guide.map(s => `<li>${escHtml(s)}</li>`).join("")}</ol>
+          ${p.guide_url ? `<div style="margin-top:8px;font-size:12.5px"><a href="${p.guide_url}" target="_blank" rel="noopener" style="text-decoration:underline">Official ${escHtml(p.name)} help →</a></div>` : ""}
         </details>` : "";
 
       return `
@@ -285,10 +285,10 @@
           <div>
             <div class="conn-name">
               <span style="font-size:18px">${icon}</span>
-              ${p.name}
+              ${escHtml(p.name)}
               <span class="conn-kind">${p.kind === "oauth" ? "API" : p.kind === "csv" ? "CSV" : "Manual"}</span>
             </div>
-            <div class="conn-desc">${p.description}</div>
+            <div class="conn-desc">${escHtml(p.description)}</div>
             <div class="conn-meta">
               <span>Transactions: <strong>${p.transaction_count}</strong></span>
               ${c ? `<span>Last sync: <strong>${fmtSyncTime(c.last_sync_at)}</strong></span>` : ""}
@@ -328,14 +328,14 @@
                 ${rows.map(r => `
                   <tr>
                     <td>${fmtSyncTime(r.started_at)}</td>
-                    <td>${r.platform}</td>
-                    <td class="muted">${r.source}</td>
+                    <td>${escHtml(r.platform)}</td>
+                    <td class="muted">${escHtml(r.source)}</td>
                     <td class="num">${r.created || 0}</td>
                     <td class="num muted">${r.skipped || 0}</td>
                     <td>${r.status === "ok"
                         ? '<span class="badge badge-gain">ok</span>'
                         : '<span class="badge badge-loss">error</span>'}</td>
-                    <td class="muted" style="font-size:12.5px">${r.message || ""}</td>
+                    <td class="muted" style="font-size:12.5px">${escHtml(r.message || "")}</td>
                   </tr>
                 `).join("")}
               </tbody>

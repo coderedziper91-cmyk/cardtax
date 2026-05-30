@@ -8,6 +8,7 @@ endpoints return a 503 and the UI shows a friendly notice.
 from __future__ import annotations
 
 import json
+import logging
 import os
 from datetime import date, datetime
 from typing import Callable, Optional
@@ -18,6 +19,8 @@ from sqlalchemy.orm import Session
 
 from . import email_service
 from .database import Base, Transaction, User, engine
+
+log = logging.getLogger("cardtax.billing")
 
 try:
     import stripe  # type: ignore
@@ -351,7 +354,12 @@ def handle_stripe_event(db: Session, event: dict) -> None:
         if not user:
             meta_uid = (obj.get("metadata") or {}).get("cardtax_user_id")
             if meta_uid:
-                user = db.query(User).filter(User.id == int(meta_uid)).first()
+                try:
+                    uid_int = int(meta_uid)
+                except (TypeError, ValueError):
+                    log.warning("stripe webhook: ignoring non-integer cardtax_user_id %r", meta_uid)
+                    return
+                user = db.query(User).filter(User.id == uid_int).first()
                 if user and not user.stripe_customer_id:
                     user.stripe_customer_id = customer_id
         if not user:

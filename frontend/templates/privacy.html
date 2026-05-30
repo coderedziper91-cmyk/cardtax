@@ -13,11 +13,11 @@
   <meta property="og:site_name" content="CardTax">
   <meta property="og:title" content="Privacy policy">
   <meta property="og:description" content="How CardTax handles your data.">
-  <meta property="og:image" content="/static/og-image.png">
+  <meta property="og:image" content="https://cardtax.app/static/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Privacy policy">
   <meta name="twitter:description" content="How CardTax handles your data.">
-  <meta name="twitter:image" content="/static/og-image.png">
+  <meta name="twitter:image" content="https://cardtax.app/static/og-image.png">
   <link rel="stylesheet" href="/static/app.css">
   <style>
     .legal { max-width: 680px; margin: 0 auto; }
@@ -69,7 +69,8 @@
         <li>Card images you upload to Card Scanner (feature is coming soon — no images are processed today).</li>
         <li>Account info (future): email, display name. Passwords stored as salted hashes.</li>
         <li>Imported CSVs: parsed into transactions; raw file is not retained.</li>
-        <li>Minimal server logs for security and debugging. No third-party analytics or ad trackers.</li>
+        <li>Minimal server logs for security and debugging.</li>
+        <li>Google Analytics (GA4) for aggregate site-usage measurement (page views, traffic sources). We do not use Google Analytics for ad targeting and do not load third-party advertising trackers.</li>
       </ul>
 
       <h3>3. How we use information</h3>
@@ -96,6 +97,14 @@
         <li>Legal compliance: subpoena, court order, or to protect rights, property, or safety.</li>
         <li>Business transfer in a merger or acquisition, with notice.</li>
         <li>With your explicit consent.</li>
+      </ul>
+
+      <h3>5a. Data sub-processors</h3>
+      <p>We rely on the following sub-processors to deliver the service:</p>
+      <ul>
+        <li><strong>Stripe</strong> — subscription billing and payment processing. Stripe receives the email and payment details you submit at checkout. We never see or store your full card number.</li>
+        <li><strong>SendGrid (Twilio)</strong> — transactional email delivery (welcome, email verification, password reset, tax-deadline reminders, billing receipts). Receives your email address and the message content.</li>
+        <li><strong>Google Analytics (Google LLC)</strong> — aggregate site-usage measurement, configured without ad targeting.</li>
       </ul>
 
       <h3>6. Card scanner data flow</h3>
@@ -125,7 +134,7 @@
       <p>Lawful bases: contract, legitimate interest, and consent. You have the right to lodge a complaint with your local data protection authority.</p>
 
       <h3>12. Cookies</h3>
-      <p>Functional cookies / localStorage only (theme preference, login state). No advertising cookies or third-party analytics.</p>
+      <p>Functional cookies / localStorage for theme preference and login state. We also set Google Analytics (GA4) cookies for aggregate measurement of site usage. No advertising cookies and no third-party ad trackers.</p>
 
       <h3>13. Children</h3>
       <p>CardTax is not intended for children under 13.</p>

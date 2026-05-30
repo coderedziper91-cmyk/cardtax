@@ -13,11 +13,11 @@
   <meta property="og:site_name" content="CardTax">
   <meta property="og:title" content="Tax summary">
   <meta property="og:description" content="Federal, state, and quarterly tax estimates from your card sales.">
-  <meta property="og:image" content="/static/og-image.png">
+  <meta property="og:image" content="https://cardtax.app/static/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Tax summary">
   <meta name="twitter:description" content="Federal, state, and quarterly tax estimates from your card sales.">
-  <meta name="twitter:image" content="/static/og-image.png">
+  <meta name="twitter:image" content="https://cardtax.app/static/og-image.png">
   <link rel="stylesheet" href="/static/app.css">
   <script src="/static/analytics.js" defer></script>
 </head>
@@ -163,7 +163,7 @@
       function rows(arr) {
         if (!arr.length) return `<tr><td colspan="6" class="muted" style="text-align:center">No transactions</td></tr>`;
         return arr.slice(0, 30).map(t => `<tr>
-          <td>${t.description}</td>
+          <td>${escHtml(t.description)}</td>
           <td class="muted">${t.date_acquired}</td>
           <td class="muted">${t.date_sold}</td>
           <td class="num">${fmt$(t.proceeds)}</td>
@@ -208,7 +208,7 @@
       function renderBox(title, rows) {
         if (!rows || !rows.length) return "";
         const r = rows.map(r => `<tr>
-          <td>${r.description}</td>
+          <td>${escHtml(r.description)}</td>
           <td class="muted">${r.date_acquired}</td>
           <td class="muted">${r.date_sold}</td>
           <td class="num">${fmt$(r.proceeds)}</td>

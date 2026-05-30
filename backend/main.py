@@ -792,6 +792,13 @@ def _user_public(user: User, db: Optional[Session] = None) -> dict:
     return payload
 
 
+def _dev_mode_enabled() -> bool:
+    """True only when CARDTAX_DEV=1 is explicitly set. Production deploys must
+    never expose verification links in API responses, even if SendGrid happens
+    to be unconfigured (misconfiguration shouldn't leak verification tokens)."""
+    return (os.environ.get("CARDTAX_DEV") or "").strip() == "1"
+
+
 def _send_verification_email(user: User, request: Request) -> Optional[str]:
     """Mint a token, send the email, return the URL (handy for dev when
     SendGrid isn't configured)."""
@@ -825,7 +832,7 @@ def api_signup(body: SignupBody, request: Request, db: Session = Depends(get_db)
     security_mod.write_audit(db, "signup", user_id=user.id, request=request,
                              details={"email": email})
     payload = _user_public(user, db)
-    if dev_link and not email_service.is_configured():
+    if dev_link and _dev_mode_enabled():
         payload["dev_verification_link"] = dev_link
     return payload
 
@@ -1131,7 +1138,7 @@ def api_resend_verification(
         return {"ok": True, "already_verified": True}
     dev_link = _send_verification_email(user, request)
     out = {"ok": True, "already_verified": False}
-    if dev_link and not email_service.is_configured():
+    if dev_link and _dev_mode_enabled():
         out["dev_verification_link"] = dev_link
     return out
 
