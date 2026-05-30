@@ -732,8 +732,9 @@ def build_tax_summary_pdf(
 
     story.append(Spacer(1, 18))
     story.append(Paragraph(
-        "This summary is a calculation aid based on the figures you entered and the published "
-        "2025 brackets / thresholds. It is not tax advice. Review with a CPA before filing.",
+        f"This summary is a calculation aid based on the figures you entered and the published "
+        f"{settings.get('tax_year', 'current')} brackets / thresholds. It is not tax advice. "
+        f"Review with a CPA before filing.",
         STYLES["small"],
     ))
 

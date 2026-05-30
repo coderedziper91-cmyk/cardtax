@@ -5,13 +5,17 @@ Per-state rules for taxing collectible capital gains, OBBBA conformity status,
 and the federal SALT (state and local tax) deduction cap as raised by OBBBA.
 
 Sources:
-- Tax Foundation 2025 state individual income tax rates
-- State revenue department guidance (CA FTB, NY DTF, MA DOR, etc.)
-- OBBBA §70401 (SALT cap increase)
+- Tax Foundation 2026 state individual income tax rates (pub. Feb 11, 2026)
+- State revenue department guidance (CA FTB, NY DTF, MA DOR, OH DOT, etc.)
+- OBBBA §70120 / Pub. L. 119-21 (SALT cap increase; CRS R48611)
+- State legislation: NC SL 2023-12, MS Build-Up MS Act, GA HB 463,
+  KY HB 1, OH HB 96, MT HB 337, WV SB 392, MD 2025 budget reconciliation
+  (6.25% / 6.5% brackets), HI Act 46 SLH 2024, WA SB 5813 (9.9% tier),
+  NE LB 754, OK consolidation, ME 2% surtax
 - CA AB 1219 / FTB conformity statements re: IRC selective conformity
 
 NOTE: state tax law changes frequently. This module reflects the best
-publicly available information as of the 2025 tax year. Users should
+publicly available information for the 2026 tax year. Users should
 verify with a CPA before filing.
 """
 
@@ -60,7 +64,8 @@ class StateTaxProfile:
 # ---------------------------------------------------------------------------
 # State profiles
 # ---------------------------------------------------------------------------
-# Bracket data is 2025 single-filer (or post-2024 most recent). Rates rounded.
+# Bracket data is 2026 single-filer per Tax Foundation 2026 table and state
+# DOR publications. Rates rounded to statutory precision.
 
 NO_TAX_STATES = ["AK", "FL", "NV", "NH", "SD", "TN", "TX", "WA", "WY"]
 
@@ -77,14 +82,14 @@ STATES: dict[str, StateTaxProfile] = {
         brackets_single=[(4_500, 0.02), (8_900, 0.039), (float("inf"), 0.039)],
         notes="50% LTCG exclusion."),
     "CA": StateTaxProfile("CA", "California", True, False, top_rate=0.133,
-        brackets_single=[(10_756, 0.01), (25_499, 0.02), (40_245, 0.04), (55_866, 0.06),
-                         (70_606, 0.08), (360_659, 0.093), (432_787, 0.103),
-                         (721_314, 0.113), (float("inf"), 0.123)],
+        brackets_single=[(11_079, 0.01), (26_264, 0.02), (41_452, 0.04), (57_542, 0.06),
+                         (72_725, 0.08), (371_480, 0.093), (445_772, 0.103),
+                         (742_954, 0.113), (float("inf"), 0.123)],
         obbba_conformity=ConformityType.STATIC,
-        conformity_note="Conforms to IRC as of Jan 1, 2015 with selective updates. "
-                        "Did NOT adopt OBBBA. Treats all capital gains as ordinary income — "
-                        "no preferential rate for collectibles or LT gains.",
-        notes="1% mental health surcharge over $1M = effective 14.4% top rate. CA does NOT recognize the federal 28% collectibles cap."),
+        conformity_note="Conforms to IRC as of Jan 1, 2015 with selective updates (Rev. & Tax. Code §17024.5). "
+                        "Did NOT adopt OBBBA — California taxable income may diverge from federal. "
+                        "Treats all capital gains as ordinary income — no preferential rate for collectibles or LT gains.",
+        notes="2026 CCPI-indexed brackets. Statutory 12.3% top + 1% Mental Health Services Tax over $1M = effective 13.3% (14.4% on top dollars). CA does NOT recognize the federal 28% collectibles cap."),
     "CO": StateTaxProfile("CO", "Colorado", True, True, flat_rate=0.044, top_rate=0.044,
         cap_gains_treatment=StateGainTreatment.FLAT),
     "CT": StateTaxProfile("CT", "Connecticut", True, False, top_rate=0.0699,
@@ -101,60 +106,82 @@ STATES: dict[str, StateTaxProfile] = {
                          (float("inf"), 0.1075)]),
     "FL": StateTaxProfile("FL", "Florida", False, False, obbba_conformity=ConformityType.NONE,
         cap_gains_treatment=StateGainTreatment.NONE, notes="No state income tax."),
-    "GA": StateTaxProfile("GA", "Georgia", True, True, flat_rate=0.0539, top_rate=0.0539,
+    "GA": StateTaxProfile("GA", "Georgia", True, True, flat_rate=0.0499, top_rate=0.0499,
         cap_gains_treatment=StateGainTreatment.FLAT,
-        notes="Moving to flat 4.99% by 2029."),
+        notes="GA HB 463 (2025) accelerated the schedule, lowering the flat rate to 4.99% for 2026 (down from 5.19% in 2025). "
+              "Long-term plan glides toward 3.99% via 0.125 pp annual cuts subject to revenue triggers."),
     "HI": StateTaxProfile("HI", "Hawaii", True, False, top_rate=0.11,
-        brackets_single=[(2_400, 0.014), (4_800, 0.032), (9_600, 0.055), (14_400, 0.064),
-                         (19_200, 0.068), (24_000, 0.072), (36_000, 0.076), (48_000, 0.079),
-                         (150_000, 0.0825), (175_000, 0.09), (200_000, 0.10), (float("inf"), 0.11)],
-        notes="LTCG capped at 7.25% (effective rate ceiling)."),
+        brackets_single=[(9_600, 0.014), (14_400, 0.032), (19_200, 0.055), (24_000, 0.064),
+                         (36_000, 0.068), (48_000, 0.072), (125_000, 0.076), (175_000, 0.079),
+                         (225_000, 0.0825), (275_000, 0.09), (325_000, 0.10), (float("inf"), 0.11)],
+        notes="Act 46 SLH 2024 (Green Affordability Plan II) widened brackets effective 1/1/2025; "
+              "rates stable for 2026. 11% top now applies above $325k (was $200k). "
+              "LTCG capped at 7.25% (effective rate ceiling). A 13% bracket above $1M kicks in 2027+."),
     "ID": StateTaxProfile("ID", "Idaho", True, True, flat_rate=0.053, top_rate=0.053,
         cap_gains_treatment=StateGainTreatment.FLAT),
     "IL": StateTaxProfile("IL", "Illinois", True, True, flat_rate=0.0495, top_rate=0.0495,
         cap_gains_treatment=StateGainTreatment.FLAT),
-    "IN": StateTaxProfile("IN", "Indiana", True, True, flat_rate=0.0305, top_rate=0.0305,
+    "IN": StateTaxProfile("IN", "Indiana", True, True, flat_rate=0.0295, top_rate=0.0295,
         cap_gains_treatment=StateGainTreatment.FLAT,
-        notes="Plus county income tax (avg ~1.5%, not modeled)."),
+        notes="Flat 2.95% for 2026 (reduced from 3.05%). Plus county income tax 0.5%–3.38% (avg ~1.5%, not modeled). Marion County (Indianapolis) = 2.02%."),
     "IA": StateTaxProfile("IA", "Iowa", True, True, flat_rate=0.038, top_rate=0.038,
         cap_gains_treatment=StateGainTreatment.FLAT,
         notes="Moved to flat 3.8% in 2025 (formerly progressive)."),
-    "KS": StateTaxProfile("KS", "Kansas", True, False, top_rate=0.057,
-        brackets_single=[(23_000, 0.052), (float("inf"), 0.057)]),
-    "KY": StateTaxProfile("KY", "Kentucky", True, True, flat_rate=0.04, top_rate=0.04,
-        cap_gains_treatment=StateGainTreatment.FLAT),
+    "KS": StateTaxProfile("KS", "Kansas", True, False, top_rate=0.0558,
+        brackets_single=[(23_000, 0.052), (float("inf"), 0.0558)],
+        notes="Two-bracket structure per SB 1 (2024); top rate reduced to 5.58% (from 5.7%) effective 2024."),
+    "KY": StateTaxProfile("KY", "Kentucky", True, True, flat_rate=0.035, top_rate=0.035,
+        cap_gains_treatment=StateGainTreatment.FLAT,
+        notes="Flat 3.5% for 2026 (reduced from 4.0% per KY HB 1)."),
     "LA": StateTaxProfile("LA", "Louisiana", True, True, flat_rate=0.03, top_rate=0.03,
         cap_gains_treatment=StateGainTreatment.FLAT,
         notes="Moved to flat 3% in 2025."),
     "ME": StateTaxProfile("ME", "Maine", True, False, top_rate=0.0715,
-        brackets_single=[(26_800, 0.058), (63_450, 0.0675), (float("inf"), 0.0715)]),
-    "MD": StateTaxProfile("MD", "Maryland", True, False, top_rate=0.0575,
+        brackets_single=[(27_400, 0.058), (64_850, 0.0675), (float("inf"), 0.0715)],
+        notes="2026 inflation-adjusted brackets. NEW for 2026: 2% surtax on Maine taxable income "
+              "over $1,000,000 ($1,500,000 MFJ/HoH) — effective top marginal rate becomes 9.15%. "
+              "Surtax is not modeled here for income below the $1M threshold."),
+    "MD": StateTaxProfile("MD", "Maryland", True, False, top_rate=0.065,
         brackets_single=[(1_000, 0.02), (2_000, 0.03), (3_000, 0.04), (100_000, 0.0475),
-                         (125_000, 0.05), (150_000, 0.0525), (250_000, 0.055), (float("inf"), 0.0575)],
-        notes="Plus county tax 2.25%–3.20% (avg ~3%, not modeled)."),
+                         (125_000, 0.05), (150_000, 0.0525), (250_000, 0.055),
+                         (500_000, 0.0575), (1_000_000, 0.0625), (float("inf"), 0.065)],
+        brackets_mfj_doubles=False,
+        notes="Maryland 2025 budget added two new top brackets retroactive to 1/1/2025: "
+              "6.25% on $500k–$1M (single) / $600k–$1.2M (MFJ); 6.5% above $1M (single) / $1.2M (MFJ). "
+              "Note: MD MFJ thresholds at the top are not exactly 2x single — they are $600k/$1.2M (not $1M/$2M); "
+              "MFJ approximation is not used here. Plus county tax 2.25%–3.30% (Baltimore = 3.30%, avg ~3%, not modeled)."),
     "MA": StateTaxProfile("MA", "Massachusetts", True, True, flat_rate=0.05, top_rate=0.05,
         cap_gains_treatment=StateGainTreatment.SPECIAL_COLLECTIBLES,
         collectibles_rate_override=0.12,
         short_term_rate_override=0.085,
-        notes="MA taxes most income at flat 5%. SHORT-TERM capital gains: 8.5%. "
-              "LONG-TERM gains from collectibles (and pre-1996 installment sales): 12%. "
-              "Plus 4% surtax on income over $1M (effective 9% on top dollars)."),
+        notes="MA taxes most income at flat 5% (G.L. c. 62 §4). "
+              "SHORT-TERM capital gains: 8.5%. "
+              "LONG-TERM gains on collectibles (and pre-1996 installment sales): 12% per G.L. c. 62 §4(d). "
+              "Fair Share Amendment 4% millionaire surtax applies to Part A+B+C taxable income over "
+              "$1,107,750 for 2026 (DOR-certified inflation-indexed threshold) — effective top marginal "
+              "becomes 9% on ordinary income (16% on collectibles, 12.5% on short-term gains). "
+              "Surtax is NOT modeled here unless explicit total income exceeds the threshold."),
     "MI": StateTaxProfile("MI", "Michigan", True, True, flat_rate=0.0425, top_rate=0.0425,
         cap_gains_treatment=StateGainTreatment.FLAT),
     "MN": StateTaxProfile("MN", "Minnesota", True, False, top_rate=0.0985,
         brackets_single=[(32_570, 0.0535), (106_990, 0.068), (200_000, 0.0785),
                          (float("inf"), 0.0985)],
         notes="Plus 1% NIIT-equivalent over $1M = 10.85% effective top."),
-    "MS": StateTaxProfile("MS", "Mississippi", True, True, flat_rate=0.044, top_rate=0.044,
+    "MS": StateTaxProfile("MS", "Mississippi", True, True, flat_rate=0.04, top_rate=0.04,
         cap_gains_treatment=StateGainTreatment.FLAT,
-        notes="Phasing down toward 3% by 2030."),
+        notes="Flat 4.0% on income over $10,000 for 2026 (reduced from 4.4%). "
+              "Build-Up Mississippi Act phases to 3.75% (2027), 3.5% (2028), 3.25% (2029), 3.0% (2030); "
+              "future reductions trigger only if revenue tests met."),
     "MO": StateTaxProfile("MO", "Missouri", True, False, top_rate=0.047,
-        brackets_single=[(1_273, 0.02), (2_546, 0.025), (3_819, 0.03), (5_092, 0.035),
-                         (6_365, 0.04), (7_638, 0.045), (float("inf"), 0.047)]),
-    "MT": StateTaxProfile("MT", "Montana", True, False, top_rate=0.059,
-        brackets_single=[(20_500, 0.047), (float("inf"), 0.059)]),
-    "NE": StateTaxProfile("NE", "Nebraska", True, False, top_rate=0.052,
-        brackets_single=[(3_700, 0.0246), (22_170, 0.0351), (35_730, 0.0501), (float("inf"), 0.052)]),
+        brackets_single=[(1_348, 0.02), (2_696, 0.025), (4_044, 0.03), (5_392, 0.035),
+                         (6_740, 0.04), (8_088, 0.045), (float("inf"), 0.047)],
+        notes="2026 inflation-adjusted bracket thresholds. Top rate 4.70% (reduced from 4.80% in 2025); further reductions toward 4.5% scheduled subject to revenue triggers."),
+    "MT": StateTaxProfile("MT", "Montana", True, False, top_rate=0.0565,
+        brackets_single=[(95_000, 0.047), (float("inf"), 0.0565)],
+        notes="MT HB 337 widened the 4.7% bracket to $95k single ($190k MFJ) and reduced top rate from 5.9% to 5.65% for 2026. Top drops to 5.4% in 2027."),
+    "NE": StateTaxProfile("NE", "Nebraska", True, False, top_rate=0.0455,
+        brackets_single=[(2_400, 0.0246), (18_000, 0.0351), (float("inf"), 0.0455)],
+        notes="LB 754 collapsed brackets and dropped top rate from 5.20% to 4.55% for 2026. Scheduled to drop to 3.99% in 2027."),
     "NV": StateTaxProfile("NV", "Nevada", False, False, obbba_conformity=ConformityType.NONE,
         cap_gains_treatment=StateGainTreatment.NONE, notes="No state income tax."),
     "NH": StateTaxProfile("NH", "New Hampshire", False, False, obbba_conformity=ConformityType.NONE,
@@ -165,24 +192,32 @@ STATES: dict[str, StateTaxProfile] = {
                          (500_000, 0.0637), (1_000_000, 0.0897), (float("inf"), 0.1075)],
         notes="NJ does NOT allow capital loss carryover (one-year window only)."),
     "NM": StateTaxProfile("NM", "New Mexico", True, False, top_rate=0.059,
-        brackets_single=[(5_500, 0.017), (16_500, 0.032), (33_500, 0.047), (210_000, 0.049),
-                         (float("inf"), 0.059)],
-        notes="40% LTCG deduction (with caps)."),
+        brackets_single=[(5_500, 0.015), (16_500, 0.032), (33_500, 0.043), (66_500, 0.047),
+                         (210_000, 0.049), (float("inf"), 0.059)],
+        notes="Six-bracket structure for 2026 (HB 252, 2024). Bottom rate dropped from 1.7% to 1.5%. 40% LTCG deduction (with caps)."),
     "NY": StateTaxProfile("NY", "New York", True, False, top_rate=0.109,
-        brackets_single=[(8_500, 0.04), (11_700, 0.045), (13_900, 0.0525), (80_650, 0.055),
-                         (215_400, 0.06), (1_077_550, 0.0685), (5_000_000, 0.0965),
+        brackets_single=[(8_500, 0.039), (11_700, 0.044), (13_900, 0.0515), (80_650, 0.054),
+                         (215_400, 0.059), (1_077_550, 0.0685), (5_000_000, 0.0965),
                          (25_000_000, 0.103), (float("inf"), 0.109)],
-        notes="NYC residents owe additional 3.078%–3.876% city income tax (not modeled)."),
-    "NC": StateTaxProfile("NC", "North Carolina", True, True, flat_rate=0.0425, top_rate=0.0425,
+        notes="FY26 budget (A3009, signed 5/9/2025) cut the five lowest brackets by 0.1 pp for 2026 "
+              "(from 4.0/4.5/5.25/5.5/6.0% → 3.9/4.4/5.15/5.4/5.9%) and another 0.1 pp scheduled for 2027. "
+              "Top four brackets unchanged. NYC residents owe additional 3.078%–3.876% city income tax "
+              "(modeled separately via LOCAL_TAXES['NY:NYC'])."),
+    "NC": StateTaxProfile("NC", "North Carolina", True, True, flat_rate=0.0399, top_rate=0.0399,
         cap_gains_treatment=StateGainTreatment.FLAT,
-        notes="Flat rate dropping to 3.99% in 2026."),
+        notes="Flat 3.99% for 2026 (final step of scheduled phasedown from 4.25%). "
+              "Scheduled to drop to 3.49% in 2027 and 2.99% in 2028 if revenue triggers met."),
     "ND": StateTaxProfile("ND", "North Dakota", True, False, top_rate=0.025,
-        brackets_single=[(47_150, 0.0), (235_750, 0.0195), (float("inf"), 0.025)]),
-    "OH": StateTaxProfile("OH", "Ohio", True, False, top_rate=0.035,
-        brackets_single=[(26_050, 0.0), (100_000, 0.0275), (float("inf"), 0.035)]),
-    "OK": StateTaxProfile("OK", "Oklahoma", True, False, top_rate=0.0475,
-        brackets_single=[(1_000, 0.0025), (2_500, 0.0075), (3_750, 0.0175), (4_900, 0.0275),
-                         (7_200, 0.0375), (float("inf"), 0.0475)]),
+        brackets_single=[(48_475, 0.0), (244_825, 0.0195), (float("inf"), 0.025)],
+        notes="Two-bracket structure plus a 0% zero-bracket on first ~$48k. 2026 inflation-adjusted thresholds."),
+    "OH": StateTaxProfile("OH", "Ohio", True, False, top_rate=0.0275,
+        brackets_single=[(26_050, 0.0), (float("inf"), 0.0275)],
+        notes="OH HB 96 (FY26-27 budget) collapsed the prior 2.75%/3.5% tiers into a single flat 2.75% above the $26,050 zero-bracket for 2026."),
+    "OK": StateTaxProfile("OK", "Oklahoma", True, False, top_rate=0.045,
+        brackets_single=[(1_000, 0.0025), (7_200, 0.0275), (float("inf"), 0.045)],
+        notes="OK HB 2764 (signed 5/28/2025) collapsed six brackets into three and reduced "
+              "top rate from 4.75% to 4.50% effective for tax year 2026. A trigger mechanism "
+              "schedules further 0.25 pp cuts when revenue benchmarks are met."),
     "OR": StateTaxProfile("OR", "Oregon", True, False, top_rate=0.099,
         brackets_single=[(4_400, 0.0475), (11_050, 0.0675), (125_000, 0.0875), (float("inf"), 0.099)],
         notes="No preferential rate for capital gains."),
@@ -191,9 +226,9 @@ STATES: dict[str, StateTaxProfile] = {
         notes="PA does NOT allow losses to offset other income classes — net cap loss is lost."),
     "RI": StateTaxProfile("RI", "Rhode Island", True, False, top_rate=0.0599,
         brackets_single=[(77_450, 0.0375), (176_050, 0.0475), (float("inf"), 0.0599)]),
-    "SC": StateTaxProfile("SC", "South Carolina", True, False, top_rate=0.062,
-        brackets_single=[(3_460, 0.0), (17_330, 0.03), (float("inf"), 0.062)],
-        notes="44% LTCG deduction."),
+    "SC": StateTaxProfile("SC", "South Carolina", True, False, top_rate=0.06,
+        brackets_single=[(3_560, 0.0), (17_830, 0.03), (float("inf"), 0.06)],
+        notes="Top rate temporarily reduced to 6.00% for 2026 (from 6.20%); scheduled to revert to 6.2% on July 1, 2026 absent further legislation. 44% LTCG deduction."),
     "SD": StateTaxProfile("SD", "South Dakota", False, False, obbba_conformity=ConformityType.NONE,
         cap_gains_treatment=StateGainTreatment.NONE, notes="No state income tax."),
     "TN": StateTaxProfile("TN", "Tennessee", False, False, obbba_conformity=ConformityType.NONE,
@@ -201,8 +236,9 @@ STATES: dict[str, StateTaxProfile] = {
         notes="No income tax. Hall tax (interest/dividends) repealed in 2021."),
     "TX": StateTaxProfile("TX", "Texas", False, False, obbba_conformity=ConformityType.NONE,
         cap_gains_treatment=StateGainTreatment.NONE, notes="No state income tax."),
-    "UT": StateTaxProfile("UT", "Utah", True, True, flat_rate=0.0455, top_rate=0.0455,
-        cap_gains_treatment=StateGainTreatment.FLAT),
+    "UT": StateTaxProfile("UT", "Utah", True, True, flat_rate=0.045, top_rate=0.045,
+        cap_gains_treatment=StateGainTreatment.FLAT,
+        notes="Flat 4.50% for 2026 (retroactive reduction from 4.55%)."),
     "VT": StateTaxProfile("VT", "Vermont", True, False, top_rate=0.0875,
         brackets_single=[(45_400, 0.0335), (110_050, 0.066), (229_550, 0.076), (float("inf"), 0.0875)],
         notes="40% LTCG exclusion (with caps)."),
@@ -210,12 +246,15 @@ STATES: dict[str, StateTaxProfile] = {
         brackets_single=[(3_000, 0.02), (5_000, 0.03), (17_000, 0.05), (float("inf"), 0.0575)]),
     "WA": StateTaxProfile("WA", "Washington", False, False, obbba_conformity=ConformityType.NONE,
         cap_gains_treatment=StateGainTreatment.NONE,
-        notes="No general income tax, but a 7% LTCG tax applies on gains over ~$270k. "
+        notes="No general income tax, but a TIERED LTCG tax applies: 7% on long-term gains "
+              "between the $278,000 (2025; inflation-indexed) standard deduction and $1,000,000, "
+              "and 9.9% on gains exceeding $1M (added by SB 5813 effective 2025; $1M threshold NOT indexed). "
               "Tangible personal property held in WA generally excluded but collectibles "
-              "treatment is unsettled — consult a WA CPA."),
-    "WV": StateTaxProfile("WV", "West Virginia", True, False, top_rate=0.0482,
-        brackets_single=[(10_000, 0.0222), (25_000, 0.0296), (40_000, 0.0334),
-                         (60_000, 0.0444), (float("inf"), 0.0482)]),
+              "treatment is unsettled — consult a WA CPA. Real estate exempt."),
+    "WV": StateTaxProfile("WV", "West Virginia", True, False, top_rate=0.0458,
+        brackets_single=[(10_000, 0.0211), (25_000, 0.0281), (40_000, 0.0316),
+                         (60_000, 0.0422), (float("inf"), 0.0458)],
+        notes="WV SB 392 codified a 5% rate cut retroactive to 1/1/2026 (top rate dropped from 4.82% to 4.58%)."),
     "WI": StateTaxProfile("WI", "Wisconsin", True, False, top_rate=0.0765,
         brackets_single=[(14_320, 0.035), (28_640, 0.044), (315_310, 0.053), (float("inf"), 0.0765)],
         notes="30% LTCG exclusion."),
@@ -225,13 +264,21 @@ STATES: dict[str, StateTaxProfile] = {
 
 
 # ---------------------------------------------------------------------------
-# SALT (OBBBA §70401)
+# SALT (OBBBA §70120 / Pub. L. 119-21)
 # ---------------------------------------------------------------------------
 # OBBBA raised the SALT deduction cap from $10,000 to $40,000 for tax years
-# 2025–2029 (with annual 1% inflation indexing). For MFS the cap is half.
+# 2025–2029. The $40,000 cap applies to Single, HoH, AND Married Filing Jointly
+# — it is NOT doubled for MFJ (the "marriage penalty" in the bill). MFS gets
+# half ($20,000).
 #
-# Phase-out: cap reduced by 30% of MAGI in excess of $500,000 ($250k MFS),
-# but never below $10,000 floor. After 2029 the cap reverts to $10,000.
+# Phase-out: cap reduced by 30% of MAGI in excess of $500,000 (2025; $250,000
+# MFS), but never below $10,000 floor ($5,000 MFS). BOTH the $40k cap AND the
+# $500k phase-out start are indexed 1%/year for 2026–2029 (2026: $40,400 cap,
+# $505,000 phase-out start). After 2029 the cap reverts to $10,000 ($5,000 MFS)
+# with no phase-out.
+#
+# Source: CRS Report R48611; Tax Foundation OBBBA explainer; The Tax Adviser
+# "Cap raised, strings attached" (Mar 2026).
 
 SALT_CAP_BASE_2025 = 40_000
 SALT_CAP_PHASEOUT_START = 500_000   # $250k MFS
@@ -246,16 +293,20 @@ def salt_cap_for(year: int, filing_status: str, magi: float) -> tuple[float, str
     """
     if year >= 2030:
         cap = 5_000 if filing_status == "mfs" else 10_000
-        return cap, f"Post-OBBBA: $10,000 cap returns (${cap:,} for {filing_status})."
+        return cap, f"Post-OBBBA: TCJA $10,000 cap returns (${cap:,} for {filing_status})."
 
     if year < 2025:
         cap = 5_000 if filing_status == "mfs" else 10_000
         return cap, f"Pre-OBBBA TCJA cap: ${cap:,}."
 
-    # 2025-2029: OBBBA expanded cap with high-income phaseout
-    indexed = SALT_CAP_BASE_2025 * (1.01 ** (year - 2025))
-    base = indexed / 2 if filing_status == "mfs" else indexed
-    phase_start = SALT_CAP_PHASEOUT_START / 2 if filing_status == "mfs" else SALT_CAP_PHASEOUT_START
+    # 2025-2029: OBBBA expanded cap with high-income phaseout.
+    # Cap AND MAGI phaseout threshold are both 1% inflation-indexed
+    # starting in 2026 (OBBBA §70120 / Pub. L. 119-21).
+    inflation_factor = 1.01 ** (year - 2025)
+    indexed_cap = SALT_CAP_BASE_2025 * inflation_factor
+    indexed_phase_start = SALT_CAP_PHASEOUT_START * inflation_factor
+    base = indexed_cap / 2 if filing_status == "mfs" else indexed_cap
+    phase_start = indexed_phase_start / 2 if filing_status == "mfs" else indexed_phase_start
     floor = SALT_CAP_FLOOR / 2 if filing_status == "mfs" else SALT_CAP_FLOOR
 
     excess = max(0.0, magi - phase_start)
@@ -413,7 +464,7 @@ def list_states() -> list[dict]:
 # ---------------------------------------------------------------------------
 # Local / City income taxes
 # ---------------------------------------------------------------------------
-# Sources: city revenue / finance department published rates as of 2025.
+# Sources: city revenue / finance department published rates as of 2026.
 # Some cities have brackets, most are flat. A few are flat fees (Denver).
 
 from dataclasses import dataclass as _dc
@@ -461,8 +512,9 @@ LOCAL_TAXES: dict[str, LocalTaxProfile] = {
     # Pennsylvania
     "PA:Philadelphia": LocalTaxProfile(
         "PA", "Philadelphia",
-        "Philadelphia Wage / Net Profits Tax — 3.75% on earnings (residents).",
-        flat_rate=0.0375, nonresident_rate=0.0344,
+        "Philadelphia Wage / Net Profits Tax — 3.74% on earnings (residents).",
+        flat_rate=0.0374, nonresident_rate=0.0343,
+        note="Rate effective July 1, 2025 (resident 3.74% / non-resident 3.43%); applies through 2026.",
     ),
 
     # Michigan
@@ -477,14 +529,15 @@ LOCAL_TAXES: dict[str, LocalTaxProfile] = {
     "OH:Cleveland": LocalTaxProfile("OH", "Cleveland", "Cleveland 2.5% flat.", flat_rate=0.025),
     "OH:Cincinnati":LocalTaxProfile("OH", "Cincinnati","Cincinnati 1.8% flat.", flat_rate=0.018),
     "OH:Toledo":    LocalTaxProfile("OH", "Toledo",    "Toledo 2.5% flat.",    flat_rate=0.025),
-    "OH:Dayton":    LocalTaxProfile("OH", "Dayton",    "Dayton 2.25% flat.",   flat_rate=0.0225),
+    "OH:Dayton":    LocalTaxProfile("OH", "Dayton",    "Dayton 2.5% flat.",    flat_rate=0.025),
     "OH:Akron":     LocalTaxProfile("OH", "Akron",     "Akron 2.5% flat.",     flat_rate=0.025),
 
     # Maryland
     "MD:Baltimore": LocalTaxProfile(
         "MD", "Baltimore",
-        "Baltimore City county-level piggyback income tax — 3.2% (top of MD bracket-equivalent).",
-        flat_rate=0.032,
+        "Baltimore City county-level piggyback income tax — 3.30% for 2026.",
+        flat_rate=0.033,
+        note="Maximum county piggyback rate rose from 3.20% to 3.30% effective tax years after 12/31/2024.",
     ),
 
     # Missouri
@@ -494,8 +547,9 @@ LOCAL_TAXES: dict[str, LocalTaxProfile] = {
     # Kentucky (occupational license fees)
     "KY:Louisville": LocalTaxProfile(
         "KY", "Louisville",
-        "Louisville/Jefferson County occupational tax — 2.2% on net profits and wages.",
-        flat_rate=0.022,
+        "Louisville/Jefferson County occupational tax — 2.2% residents, 1.45% non-residents.",
+        flat_rate=0.022, nonresident_rate=0.0145,
+        note="Resident 2.2% = 1.25% Metro + 0.20% TARC + 0.75% school board. Non-residents don't pay the 0.75% school board portion.",
     ),
 
     # Alabama
@@ -516,9 +570,10 @@ LOCAL_TAXES: dict[str, LocalTaxProfile] = {
     # Oregon (Metro Supportive Housing Services tax)
     "OR:Portland": LocalTaxProfile(
         "OR", "Portland (Metro SHS)",
-        "Portland-area Metro 1% Supportive Housing Services tax on income over $125,000 single / $200,000 joint.",
-        brackets_single=[(125_000, 0.0), (float("inf"), 0.01)],
-        note="Multnomah County Preschool For All adds 1.5% above $125k / 3% above $250k (single) — not separately modeled.",
+        "Portland-area Metro 1% Supportive Housing Services tax on income over $128,000 single / $205,000 joint (2026).",
+        brackets_single=[(128_000, 0.0), (float("inf"), 0.01)],
+        note="Beginning 2026, the exemption threshold is inflation-indexed (was fixed $125k/$200k). "
+             "Multnomah County Preschool For All adds 1.5% above $125k / 3% above $250k (single) — not separately modeled.",
     ),
 
     # Colorado (flat occupational privilege)

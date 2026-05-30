@@ -40,34 +40,32 @@ from backend.tax_engine import (
 
 
 # ---------------------------------------------------------------------------
-# Ordinary income brackets — 2025 (post-OBBBA)
+# Ordinary income brackets — 2026 (Rev. Proc. 2025-32)
 # ---------------------------------------------------------------------------
 
 
 class TestOrdinaryBrackets:
     def test_single_first_bracket_10pct(self):
-        # Single: first 11,925 at 10%
+        # Single: first 12,400 at 10%
         assert ordinary_tax(10_000, FilingStatus.SINGLE) == pytest.approx(1_000.0)
 
     def test_single_at_first_bracket_boundary(self):
-        assert ordinary_tax(11_925, FilingStatus.SINGLE) == pytest.approx(1_192.5)
+        # Single 10% bracket top = $12,400 → tax = $1,240
+        assert ordinary_tax(12_400, FilingStatus.SINGLE) == pytest.approx(1_240.0)
 
     def test_single_through_12pct_bracket(self):
-        # 11,925 * 10% = 1,192.5 + (40,000 - 11,925) * 12% = 1,192.5 + 3,369 = 4,561.5
-        assert ordinary_tax(40_000, FilingStatus.SINGLE) == pytest.approx(4_561.5)
+        # 12,400 * 10% = 1,240 + (40,000 - 12,400) * 12% = 1,240 + 3,312 = 4,552
+        assert ordinary_tax(40_000, FilingStatus.SINGLE) == pytest.approx(4_552.0)
 
     def test_single_22pct_bracket(self):
-        # All of 12% bracket + part of 22%
-        # 11,925*0.10 + (48,475-11,925)*0.12 + (80,000-48,475)*0.22
-        expected = 11_925 * 0.10 + (48_475 - 11_925) * 0.12 + (80_000 - 48_475) * 0.22
+        # Full 10% and 12% brackets plus part of 22%
+        expected = 12_400 * 0.10 + (50_400 - 12_400) * 0.12 + (80_000 - 50_400) * 0.22
         assert ordinary_tax(80_000, FilingStatus.SINGLE) == pytest.approx(expected)
 
     def test_single_top_bracket(self):
-        # Income at $700k — falls into 35% bracket
-        # 700,000 vs 626,350 split point. Last bracket above 626,350 is 35% then 37%.
+        # Income at $700k — falls into 37% bracket (single 37% starts at $640,600 in 2026)
         ti = 700_000
-        b = ORDINARY_BRACKETS_2025["single"]
-        # Compute manually using brackets list
+        b = ORDINARY_BRACKETS_2025["single"]  # alias to 2026
         tax = 0.0
         lower = 0.0
         for upper, rate in b:
@@ -79,21 +77,19 @@ class TestOrdinaryBrackets:
         assert ordinary_tax(700_000, FilingStatus.SINGLE) == pytest.approx(tax)
 
     def test_mfj_brackets_are_wider(self):
-        # MFJ 10% bracket runs to 23,850 (~double of single).
-        assert ordinary_tax(23_850, FilingStatus.MFJ) == pytest.approx(2_385.0)
+        # MFJ 10% bracket runs to $24,800 in 2026.
+        assert ordinary_tax(24_800, FilingStatus.MFJ) == pytest.approx(2_480.0)
 
     def test_mfs_brackets_narrower(self):
-        # MFS 35% bracket runs (250_525, 375_800]; 37% above. Pick a point
-        # inside the 35% bracket. Single's same income would still be in 32%.
-        rate_at_300k_mfs = marginal_rate(300_000, FilingStatus.MFS)
-        assert rate_at_300k_mfs == 0.35
-        rate_at_300k_single = marginal_rate(300_000, FilingStatus.SINGLE)
-        assert rate_at_300k_single == 0.35  # single's 35% starts at 250_525 too
+        # MFS 37% bracket starts at $384,350 (half of MFJ $768,700).
+        # Single 37% starts at $640,600. At $400k MFS → 37%; Single → 35%.
+        assert marginal_rate(400_000, FilingStatus.MFS) == 0.37
+        assert marginal_rate(400_000, FilingStatus.SINGLE) == 0.35
 
     def test_hoh_brackets(self):
-        # HoH 12% bracket goes 17,000 → 64,850
-        # 17,000*0.10 + 5,000*0.12 = 1,700 + 600 = 2,300
-        assert ordinary_tax(22_000, FilingStatus.HOH) == pytest.approx(2_300.0)
+        # HoH 12% bracket goes 17,700 → 67,450
+        # 17,700*0.10 + 4,300*0.12 = 1,770 + 516 = 2,286
+        assert ordinary_tax(22_000, FilingStatus.HOH) == pytest.approx(2_286.0)
 
     def test_zero_income(self):
         assert ordinary_tax(0, FilingStatus.SINGLE) == 0.0
@@ -102,6 +98,7 @@ class TestOrdinaryBrackets:
         assert ordinary_tax(-100, FilingStatus.SINGLE) == 0.0
 
     def test_marginal_rate_at_each_bracket(self):
+        # 2026 single bracket tops: 12,400 / 50,400 / 105,700 / 201,775 / 256,225 / 640,600
         assert marginal_rate(0, FilingStatus.SINGLE) == 0.10
         assert marginal_rate(20_000, FilingStatus.SINGLE) == 0.12
         assert marginal_rate(100_000, FilingStatus.SINGLE) == 0.22
@@ -122,8 +119,8 @@ class TestCollectiblesCap:
         assert tax == 0.0 and rate == 0.0
 
     def test_below_28pct_marginal_uses_marginal(self):
-        # At $20k taxable income, marginal is 12%. So 1k of collectible gain stacks
-        # to ~12% (since it's still under 22% bracket boundary 48,475).
+        # At $20k taxable income, marginal is 12%. 1k of collectible gain stacks
+        # to ~12% (still under 22% bracket boundary $50,400 in 2026).
         tax, rate = collectibles_ltcg_tax(1_000, 20_000, FilingStatus.SINGLE)
         assert rate == pytest.approx(0.12)
         assert tax == pytest.approx(120.0)
@@ -282,7 +279,7 @@ class TestLotMatching:
 
 
 # ---------------------------------------------------------------------------
-# AMT (Form 6251) — 2025 figures
+# AMT (Form 6251) — 2026 figures (Rev. Proc. 2025-32 + OBBBA §70106)
 # ---------------------------------------------------------------------------
 
 
@@ -305,7 +302,7 @@ class TestAMT:
             filing_status=FilingStatus.SINGLE,
             regular_tax=0.0,
         )
-        # Exemption used should be $88,100 (no phase-out at $200k)
+        # 2026 single exemption = $90,100 (no phase-out at $200k; OBBBA phaseout starts $500k)
         assert out["exemption_used"] == pytest.approx(AMT_EXEMPTION_2025["single"])
 
     def test_amt_uses_correct_exemption_mfj(self):
@@ -315,29 +312,40 @@ class TestAMT:
             filing_status=FilingStatus.MFJ,
             regular_tax=0.0,
         )
+        # 2026 MFJ exemption = $140,200 (no phase-out; OBBBA phaseout starts $1M)
         assert out["exemption_used"] == pytest.approx(AMT_EXEMPTION_2025["mfj"])
 
     def test_amt_26pct_rate_below_breakpoint(self):
-        # AMTI after exemption below 239,100 → 26%
+        # 2026 AMTI breakpoint between 26% and 28% = $244,500
+        # Single $200k - $90,100 exemption = $109,900 → 26% = $28,574
         out = amt_calculation(
             regular_taxable_income=200_000,
             collectible_lt_gain=0.0,
             filing_status=FilingStatus.SINGLE,
             regular_tax=0.0,
         )
-        # AMTI 200,000 - 88,100 exemption = 111,900 → 26% = 29,094
-        assert out["tentative_minimum_tax"] == pytest.approx(111_900 * 0.26)
+        assert out["tentative_minimum_tax"] == pytest.approx(109_900 * 0.26)
 
     def test_amt_28pct_rate_above_breakpoint(self):
+        # OBBBA phaseout cut to $500k for single in 2026 at 50% rate.
+        # AMTI = $600k. Exemption phase-out: excess = $100k → reduce $90,100
+        # by 0.50 * $100k = $50,000 → exemption = $40,100.
+        # AMTI after exemption = $600,000 - $40,100 = $559,900.
+        # 26/28% split at $244,500: $244,500 @ 26% + $315,400 @ 28%
         out = amt_calculation(
             regular_taxable_income=600_000,
             collectible_lt_gain=0.0,
             filing_status=FilingStatus.SINGLE,
             regular_tax=0.0,
         )
-        # AMTI 600k - 88,100 = 511,900 → 239,100 @ 26% + (511,900 - 239,100) @ 28%
-        expected = 239_100 * 0.26 + (511_900 - 239_100) * 0.28
-        assert out["tentative_minimum_tax"] == pytest.approx(expected)
+        expected_exemption = 90_100 - 0.50 * (600_000 - 500_000)  # = 40,100
+        expected_amti_after = 600_000 - expected_exemption        # = 559,900
+        expected_tmt = (
+            244_500 * 0.26
+            + (expected_amti_after - 244_500) * 0.28
+        )
+        assert out["exemption_used"] == pytest.approx(expected_exemption)
+        assert out["tentative_minimum_tax"] == pytest.approx(expected_tmt)
 
     def test_amt_collectibles_taxed_at_28pct(self):
         # collectible gain inside AMTI is taxed at 28% (the §1(h)(4) rate)
@@ -350,6 +358,18 @@ class TestAMT:
         # Some portion will be collectibles @ 28%
         assert out["amti"] == pytest.approx(150_000)
 
+    def test_amt_obbba_phaseout_50pct(self):
+        # Verify the OBBBA 50% phaseout (was 25% pre-OBBBA).
+        # MFJ AMTI $1.2M, phaseout starts $1.0M, excess $200k.
+        # Reduction = 0.50 * $200k = $100k → exemption $140,200 - $100k = $40,200.
+        out = amt_calculation(
+            regular_taxable_income=1_200_000,
+            collectible_lt_gain=0.0,
+            filing_status=FilingStatus.MFJ,
+            regular_tax=0.0,
+        )
+        assert out["exemption_used"] == pytest.approx(40_200.0)
+
 
 # ---------------------------------------------------------------------------
 # Self-Employment tax (Schedule SE)
@@ -358,10 +378,10 @@ class TestAMT:
 
 class TestSelfEmploymentTax:
     def test_ss_capped_at_wage_base(self):
-        # Net SE earnings far above SS wage base — SS portion should be capped
+        # Net SE earnings far above SS wage base — SS portion should be capped.
+        # 2026 SS wage base = $184,500 (SSA Oct 2025 fact sheet).
         result = self_employment_tax(500_000, FilingStatus.SINGLE)
-        # SS cap 2025 = 168,600. base = 500,000 * 0.9235 = 461,750. SS = 168,600 * 0.124
-        assert result["social_security_tax"] == pytest.approx(168_600 * 0.124)
+        assert result["social_security_tax"] == pytest.approx(184_500 * 0.124)
 
     def test_medicare_uncapped(self):
         # 2.9% Medicare applies to all SE earnings, no cap
@@ -598,7 +618,9 @@ class TestCharitableDeduction:
         assert out["allowed"] == 0.0
 
     def test_30_pct_agi_limit(self, sample_txn_factory):
-        # Donate a card with FMV $50k against $50k AGI → 30% = 15k allowed; 35k carryforward
+        # FMV $50k against $50k AGI → 30%-of-AGI limit caps deduction at $15k.
+        # 2026 OBBBA §170 0.5%-of-AGI floor: $250 disallowed → $14,750 allowed.
+        # Carryforward = $50k - $15k = $35k (floor reduces allowed, not carryforward).
         d = sample_txn_factory(
             acquisition_type=AcquisitionType.DONATION,
             purchase_price=10.0,
@@ -610,15 +632,18 @@ class TestCharitableDeduction:
             platform_fees=0.0,
         )
         out = charitable_deduction([d], 50_000)
-        assert out["allowed"] == pytest.approx(15_000.0)
+        assert out["allowed"] == pytest.approx(14_750.0)
+        assert out["agi_floor_disallowed"] == pytest.approx(250.0)
         assert out["carryforward"] == pytest.approx(35_000.0)
 
     def test_unrelated_use_basis_only(self, sample_txn_factory):
-        # LTCG card donated to a charity that will sell it → basis only
+        # LTCG card donated to a charity that will sell it → basis only.
+        # With OBBBA 0.5% AGI floor at $100k AGI = $500 disallowed, but
+        # computed deduction is only $10 → all of it is below the floor → $0 allowed.
         d = sample_txn_factory(
             acquisition_type=AcquisitionType.DONATION,
             purchase_price=10.0,
-            purchase_date=date(2020, 1, 1),  # long-term hold
+            purchase_date=date(2020, 1, 1),
             sale_date=date(2025, 6, 1),
             sale_price=500,
             fmv_at_donation=500,
@@ -626,9 +651,27 @@ class TestCharitableDeduction:
             platform_fees=0.0,
         )
         out = charitable_deduction([d], 100_000)
-        # basis = 10, FMV = 500 → unrelated use → deduct basis (10) only
         assert out["computed_deduction"] == pytest.approx(10.0)
-        assert out["allowed"] == pytest.approx(10.0)
+        assert out["allowed"] == pytest.approx(0.0)
+        assert out["agi_floor_disallowed"] == pytest.approx(10.0)
+
+    def test_obbba_agi_floor_clears_when_donations_large(self, sample_txn_factory):
+        # AGI $100k → 0.5% floor = $500. Donate a $10k FMV related-use card.
+        # 30% limit = $30k > $10k, so allowed_pre_floor = $10k.
+        # Floor disallows $500 → allowed = $9,500.
+        d = sample_txn_factory(
+            acquisition_type=AcquisitionType.DONATION,
+            purchase_price=100.0,
+            purchase_date=date(2020, 1, 1),
+            sale_date=date(2026, 6, 1),
+            sale_price=10_000,
+            fmv_at_donation=10_000,
+            donee_unrelated_use=False,
+            platform_fees=0.0,
+        )
+        out = charitable_deduction([d], 100_000)
+        assert out["agi_floor_disallowed"] == pytest.approx(500.0)
+        assert out["allowed"] == pytest.approx(9_500.0)
 
 
 # ---------------------------------------------------------------------------
@@ -1023,8 +1066,10 @@ class TestSummarizeInvestor:
 # ---------------------------------------------------------------------------
 
 
-def test_standard_deductions_2025():
-    assert STANDARD_DEDUCTION_2025["single"] == 15_000
-    assert STANDARD_DEDUCTION_2025["mfj"] == 30_000
-    assert STANDARD_DEDUCTION_2025["hoh"] == 22_500
-    assert STANDARD_DEDUCTION_2025["mfs"] == 15_000
+def test_standard_deductions_2026():
+    # Rev. Proc. 2025-32 — 2026 inflation-adjusted standard deductions
+    # (with OBBBA-permanent baseline).
+    assert STANDARD_DEDUCTION_2025["single"] == 16_100
+    assert STANDARD_DEDUCTION_2025["mfj"] == 32_200
+    assert STANDARD_DEDUCTION_2025["hoh"] == 24_150
+    assert STANDARD_DEDUCTION_2025["mfs"] == 16_100

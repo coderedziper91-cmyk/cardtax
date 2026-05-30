@@ -66,7 +66,7 @@
       <ul>
         <li>Transaction data you enter: titles, sale prices, fees, dates, basis, grading, platform, acquisition method, notes.</li>
         <li>Tax settings: year, filing status, state, city, classification, income estimate.</li>
-        <li>Card images you upload to Card Scanner.</li>
+        <li>Card images you upload to Card Scanner (feature is coming soon — no images are processed today).</li>
         <li>Account info (future): email, display name. Passwords stored as salted hashes.</li>
         <li>Imported CSVs: parsed into transactions; raw file is not retained.</li>
         <li>Minimal server logs for security and debugging. No third-party analytics or ad trackers.</li>
@@ -75,7 +75,7 @@
       <h3>3. How we use information</h3>
       <ul>
         <li>Compute tax estimates and form previews.</li>
-        <li>Identify uploaded card photos via a third-party vision model.</li>
+        <li>Identify uploaded card photos via a third-party vision model (planned — not active today).</li>
         <li>Provide the features you request.</li>
         <li>Maintain and improve the service.</li>
         <li>Comply with applicable law.</li>
@@ -99,7 +99,7 @@
       </ul>
 
       <h3>6. Card scanner data flow</h3>
-      <p>Photos are stored locally in your CardTax data directory and sent to a third-party vision model (default OpenAI) with a prompt asking for identification. Do not upload photos containing personally identifying information beyond the card itself.</p>
+      <p>The Card Scanner is coming soon and is not currently active — no photos are uploaded or processed today. When it ships, photos will be stored locally in your CardTax data directory and sent to a third-party vision model (default OpenAI) with a prompt asking for identification. Do not upload photos containing personally identifying information beyond the card itself.</p>
 
       <h3>7. Security</h3>
       <p>TLS in transit, encryption at rest for production databases, access controls, principle-of-least-privilege, and regular dependency updates.</p>

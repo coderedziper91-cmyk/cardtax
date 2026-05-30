@@ -26,7 +26,7 @@ Implements the 2025 OBBBA (One Big Beautiful Bill Act) tax code for collectibles
 - 28% maximum long-term capital gains rate on collectibles (IRC §1(h)(4))
 - Short-term gains taxed as ordinary income (2025 brackets)
 - 3.8% Net Investment Income Tax (NIIT) for MAGI > $200k single / $250k MFJ
-- 1099-K threshold: $20k + 200 transactions (2025), $600 (2026)
+- 1099-K threshold: $20,000 AND 200 transactions per platform — both required (OBBBA repealed the ARPA $600 trigger, retroactive to 2022)
 - Cost basis includes grading, shipping, insurance, platform fees
 - No wash sale rules on collectibles (IRC §1091 only applies to stocks/securities)
 - IRC §183 9-factor hobby vs. business test

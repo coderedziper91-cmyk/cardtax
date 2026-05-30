@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CardTax — Tax tracking for card sellers · eBay, Whatnot, COMC</title>
-  <meta name="description" content="CardTax turns your eBay, Whatnot, COMC and Facebook sales into IRS-ready Schedule C, Schedule D, and Form 8949. Handle the $600 1099-K threshold without a spreadsheet.">
-  <meta name="keywords" content="card seller taxes, 1099-K, sports card taxes, Pokemon card taxes, eBay tax tracker, Whatnot tax tracker, Schedule C card flipping, Form 8949 cards, hobby vs business cards">
+  <meta name="description" content="CardTax turns your eBay, Whatnot, COMC and Facebook sales into IRS-ready Schedule C, Schedule D, and Form 8949. Built for the 28% collectibles rate, multi-platform basis tracking, and hobby/dealer/investor classification.">
+  <meta name="keywords" content="card seller taxes, collectibles 28% rate, sports card taxes, Pokemon card taxes, eBay tax tracker, Whatnot tax tracker, Schedule C card flipping, Form 8949 cards, hobby vs business cards, cost basis tracking">
   <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
   <meta name="robots" content="index,follow">
@@ -15,7 +15,7 @@
   <meta property="og:type" content="website">
   <meta property="og:url"  content="https://cardtax.app/">
   <meta property="og:title" content="CardTax — Tax tracking for card sellers">
-  <meta property="og:description" content="Turn your eBay, Whatnot, and COMC sales into IRS-ready Schedule C, Schedule D, and Form 8949. Built for the $600 1099-K era.">
+  <meta property="og:description" content="Turn your eBay, Whatnot, and COMC sales into IRS-ready Schedule C, Schedule D, and Form 8949. Built for the 28% collectibles rate and multi-platform cost basis tracking.">
   <meta property="og:site_name" content="CardTax">
   <meta property="og:image" content="/static/og-image.png">
   <meta property="og:locale" content="en_US">
@@ -23,7 +23,7 @@
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="CardTax — Tax tracking for card sellers">
-  <meta name="twitter:description" content="Hit the $600 1099-K threshold? CardTax turns eBay, Whatnot, and COMC sales into Schedule C and Form 8949.">
+  <meta name="twitter:description" content="Every dollar of card profit is taxable — 1099-K or no 1099-K. CardTax turns eBay, Whatnot, and COMC sales into Schedule C and Form 8949 at the 28% collectibles rate.">
   <meta name="twitter:image" content="/static/og-image.png">
 
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
@@ -63,9 +63,9 @@
     "@type": "FAQPage",
     "mainEntity": [
       {"@type": "Question", "name": "Do I have to pay taxes on cards I sell?",
-       "acceptedAnswer": {"@type": "Answer", "text": "Yes. Any time you sell a card for more than you paid, the gain is taxable. The IRS treats trading cards as collectibles, so long-term gains are capped at 28% — and platforms now report your gross sales on Form 1099-K once you cross $600."}},
+       "acceptedAnswer": {"@type": "Answer", "text": "Yes. Any time you sell a card for more than you paid, the gain is taxable — whether or not a 1099-K is issued. The IRS treats trading cards as collectibles, so long-term gains can hit the 28% maximum collectibles rate instead of the 0/15/20% brackets that apply to stocks."}},
       {"@type": "Question", "name": "What is the 2026 1099-K threshold?",
-       "acceptedAnswer": {"@type": "Answer", "text": "Starting with tax year 2026, payment platforms like eBay and Whatnot must issue a Form 1099-K once your gross payments cross $600 — regardless of transaction count."}},
+       "acceptedAnswer": {"@type": "Answer", "text": "The One Big Beautiful Bill Act (OBBBA) repealed the ARPA $600 trigger and restored the original IRC §6050W threshold retroactively to 2022: a platform only has to issue a 1099-K if you exceed BOTH $20,000 in gross payments AND 200 transactions on that platform. Your tax obligation, however, does not depend on receiving a form — every dollar of profit is still taxable."}},
       {"@type": "Question", "name": "Does CardTax import from eBay and Whatnot?",
        "acceptedAnswer": {"@type": "Answer", "text": "Yes. Drop in the CSVs from eBay Seller Hub or Whatnot’s sales export and CardTax maps the columns automatically. COMC, Mercari, and TCGplayer are supported via the generic importer."}},
       {"@type": "Question", "name": "Am I a hobbyist, investor, or dealer?",
@@ -104,7 +104,7 @@
   <div class="lp-wrap">
     <div class="lp-hero-grid">
       <div>
-        <span class="lp-hero-eyebrow">Tax Year 2026 · Built for the $600 1099-K era</span>
+        <span class="lp-hero-eyebrow">Tax Year 2026 · Built for the 28% collectibles rate</span>
         <h1>Tax tracking, <em>built for card sellers.</em></h1>
         <p class="lp-hero-sub">
           eBay, Whatnot, COMC, Facebook groups — pull it all in. CardTax turns your sales into an
@@ -117,7 +117,7 @@
         <div class="lp-hero-meta">
           <span class="lp-hero-meta-item"><span class="dot"></span> All 50 states + local tax</span>
           <span class="lp-hero-meta-item"><span class="dot"></span> CSV import</span>
-          <span class="lp-hero-meta-item"><span class="dot"></span> AI card scanner</span>
+          <span class="lp-hero-meta-item"><span class="dot"></span> AI card scanner (coming soon)</span>
         </div>
       </div>
 
@@ -201,25 +201,59 @@
 </section>
 
 <!-- ============================================================
-     The $600 threshold
+     Why card sellers actually need this
      ============================================================ -->
 <section class="lp-threshold">
   <div class="lp-wrap">
     <div class="lp-threshold-grid">
       <div>
-        <div class="lp-eyebrow">The 1099-K era</div>
-        <div class="lp-threshold-big"><sup>$</sup>600</div>
+        <div class="lp-eyebrow">Why card sellers need software</div>
+        <div class="lp-threshold-big"><sup></sup>28<sup>%</sup></div>
         <div class="muted" style="margin-top:12px;font-family:var(--font-mono);font-size:12px;letter-spacing:0.06em;text-transform:uppercase">
-          Federal 1099-K threshold · 2026
+          Max collectibles long-term gain rate · IRC §1(h)(4)
         </div>
       </div>
       <div class="lp-threshold-body">
-        <p>Six hundred dollars. That's all it takes.</p>
-        <p>Cross it on <strong>any</strong> platform — eBay, Whatnot, PayPal, Venmo, Cash App — and
-          a 1099-K shows up at the IRS with your name on it. <strong>Gross</strong> proceeds, not profit.
-          Even sales of cards you're losing money on get reported.</p>
-        <p>CardTax matches every reported dollar to a real cost basis so you only pay tax on the actual gain
-          — and never miss a transaction.</p>
+        <p>The 1099-K threshold is back to $20,000 <em>and</em> 200 transactions — but that's the wrong thing to focus on.</p>
+        <p>Cards are <strong>collectibles</strong>. Long-term gains can be taxed at up to <strong>28%</strong>,
+          not the 0/15/20% brackets that apply to stocks. Every sale across eBay, Whatnot, COMC, Mercari, and
+          card shows needs its own cost basis. Hobby vs investor vs dealer changes which schedule you
+          file. Fifty states treat collectibles fifty different ways. And the IRS sees every platform
+          report — even below the threshold.</p>
+        <p><strong>Every dollar of card profit is taxable, 1099-K or not.</strong> CardTax assembles real cost basis across every platform you use and produces filer-ready Schedule&nbsp;C, Schedule&nbsp;D, and Form&nbsp;8949 at the right collectibles rate, in the right state, under the right classification.</p>
+      </div>
+    </div>
+
+    <div class="lp-threshold-pillars">
+      <div class="lp-pillar">
+        <div class="lp-pillar-num">01</div>
+        <h4>Profit is always taxable</h4>
+        <p>Whether or not eBay sends a 1099-K, every gain is income. The IRS doesn't care which form you got — it cares whether you reported the sale.</p>
+      </div>
+      <div class="lp-pillar">
+        <div class="lp-pillar-num">02</div>
+        <h4>28% collectibles rate</h4>
+        <p>Cards aren't stocks. Long-term gains stack with ordinary income up to a 28% cap — a unique calculation no off-the-shelf tax tool gets right.</p>
+      </div>
+      <div class="lp-pillar">
+        <div class="lp-pillar-num">03</div>
+        <h4>Basis across every platform</h4>
+        <p>eBay buy here, COMC consignment there, Whatnot break, Facebook private sale. Without software, reconstructing cost basis at filing time is a nightmare.</p>
+      </div>
+      <div class="lp-pillar">
+        <div class="lp-pillar-num">04</div>
+        <h4>Hobby vs dealer vs investor</h4>
+        <p>The same $30k in sales can land on Schedule 1 (no expenses), Schedule D (28% cap), or Schedule C (self-employment tax). Pick wrong, pay thousands extra.</p>
+      </div>
+      <div class="lp-pillar">
+        <div class="lp-pillar-num">05</div>
+        <h4>State tax is 50 different puzzles</h4>
+        <p>Some states tax collectibles as ordinary income. Some piggyback federal. Some have local surtaxes. Move mid-year, sell into multiple states — CardTax handles all of it.</p>
+      </div>
+      <div class="lp-pillar">
+        <div class="lp-pillar-num">06</div>
+        <h4>Audit risk lives below the threshold</h4>
+        <p>Platforms still file reports the IRS can match. Hitting $19,000 on eBay doesn't make you invisible — it makes you the easy audit when the numbers don't tie.</p>
       </div>
     </div>
   </div>
@@ -251,8 +285,8 @@
         <div class="lp-feature-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </div>
-        <h3>AI card scanner</h3>
-        <p>Point your phone at a card. CardTax identifies the player, year, set, parallel, and a fair-market value estimate — then drops it into your inventory with one tap.</p>
+        <h3>AI card scanner <span style="font-size:0.7em;font-weight:500;opacity:0.7;letter-spacing:0.04em;text-transform:uppercase">· Coming soon</span></h3>
+        <p>Point your phone at a card. CardTax will identify the player, year, set, parallel, and a fair-market value estimate — then drop it into your inventory with one tap.</p>
         <ul><li>Sports</li><li>Pokémon</li><li>MTG</li><li>Yu-Gi-Oh!</li></ul>
       </div>
 
@@ -286,7 +320,7 @@
     <h2 class="lp-section-title">Pay for the volume you actually do.</h2>
     <p class="lp-section-sub">
       Start free. Upgrade only when you outgrow it. Cancel anytime, no contract — and every paid
-      tier includes the AI scanner, all 50 states, and Schedule&nbsp;C/D exports.
+      tier includes all 50 states, Schedule&nbsp;C/D exports, and the AI scanner the moment it ships.
     </p>
 
     <div class="lp-pricing-grid">
@@ -314,12 +348,12 @@
           <span class="lp-tier-price-num">4.99</span>
           <span class="lp-tier-period">/mo</span>
         </div>
-        <div class="lp-tier-blurb">For weekend sellers who cross $600 every year.</div>
+        <div class="lp-tier-blurb">For weekend sellers tracking basis across two or three platforms.</div>
         <ul>
           <li>200 transactions / year</li>
           <li>All CSV importers</li>
           <li>State + local tax</li>
-          <li>AI card scanner (50 / mo)</li>
+          <li>AI card scanner (coming soon)</li>
         </ul>
         <a href="#waitlist" class="btn btn-secondary lp-tier-cta">Get early access</a>
       </div>
@@ -337,7 +371,7 @@
           <li>1,000 transactions / year</li>
           <li>Schedule C + self-employment tax</li>
           <li>Quarterly estimated tax planner</li>
-          <li>AI scanner (unlimited)</li>
+          <li>AI scanner (coming soon)</li>
           <li>Form 8949 export</li>
         </ul>
         <a href="#waitlist" class="btn btn-primary lp-tier-cta">Get early access</a>
@@ -388,7 +422,7 @@
       </figure>
 
       <figure class="lp-quote">
-        <div class="lp-quote-body">I'm a hobbyist — maybe forty sales a year — but the 1099-K stuff still scared me. The classification quiz told me exactly which schedule I belonged on. Took ten minutes.</div>
+        <div class="lp-quote-body">I'm a hobbyist — maybe forty sales a year — but the 28% collectibles rate and the hobby-vs-investor question still scared me. The classification quiz told me exactly which schedule I belonged on. Took ten minutes.</div>
         <figcaption class="lp-quote-cite">
           <strong>Dan K.</strong>Pokémon collector · Phoenix, AZ
         </figcaption>
@@ -409,16 +443,16 @@
       <details open>
         <summary>Do I really have to pay taxes on cards I sell?</summary>
         <div>
-          <p>Yes. Selling a card for more than you paid creates a taxable gain — same as selling stock. The IRS treats trading cards as <strong>collectibles</strong>, so long-term gains are capped at 28% (vs the 0/15/20% rates that apply to stocks).</p>
-          <p>The new twist: even <em>losing</em> sales now show up at the IRS via Form 1099-K once you cross $600 in gross proceeds. You don't owe tax on a loss, but you do have to report it — or the IRS assumes the whole 1099-K is profit.</p>
+          <p>Yes — every dollar of profit is taxable, whether or not you receive a 1099-K. Selling a card for more than you paid creates a taxable gain, same as selling stock. The IRS treats trading cards as <strong>collectibles</strong>, so long-term gains can be taxed at up to <strong>28%</strong> — higher than the 0/15/20% rates that apply to stocks, and uniquely complex to compute.</p>
+          <p>Cash sales at shows, Facebook group sales, and small private trades are all taxable too. The form is paperwork; the tax obligation exists regardless.</p>
         </div>
       </details>
 
       <details>
         <summary>What's the 1099-K threshold for 2026?</summary>
         <div>
-          <p>$600 in gross payments per platform, regardless of transaction count. eBay, Whatnot, PayPal, Venmo, Cash App, Stripe — they all issue a 1099-K above the threshold.</p>
-          <p>Some states (Massachusetts, Vermont, Virginia, Maryland, Illinois) have lower thresholds, so you may already be getting one even below $600.</p>
+          <p>The One Big Beautiful Bill Act (OBBBA) repealed the ARPA $600 trigger and restored the original IRC §6050W threshold retroactively to 2022. A payment platform only has to issue a 1099-K if you exceed <strong>both</strong> $20,000 in gross payments <strong>and</strong> 200 transactions on that single platform.</p>
+          <p>A few states (MA, VT, VA, MD, IL, NJ, DC) set lower state-level reporting thresholds, so you may still receive a state-issued 1099-K below the federal cap. And remember: not receiving a 1099-K doesn't make a sale tax-free. The IRS still knows platforms report aggregate sales information, and audits frequently target sellers who underreport below the threshold.</p>
         </div>
       </details>
 
@@ -426,7 +460,7 @@
         <summary>How does CardTax import my sales?</summary>
         <div>
           <p>Export your sales CSV from eBay Seller Hub, Whatnot, COMC, Mercari, or TCGplayer, and drop it in. CardTax auto-detects the format and maps the columns — sale price, fees, shipping, refunds.</p>
-          <p>For platforms without a clean CSV (Facebook groups, card shows, in-person), the AI card scanner and a fast manual entry form handle the rest.</p>
+          <p>For platforms without a clean CSV (Facebook groups, card shows, in-person), a fast manual entry form handles the rest — and the AI card scanner is on the way.</p>
         </div>
       </details>
 

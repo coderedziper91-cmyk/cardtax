@@ -37,8 +37,8 @@ _ENTRIES: tuple[KBEntry, ...] = (
             "Cards held over a year are long-term capital gains; under a year "
             "they're short-term and taxed as ordinary income. Cards are "
             "considered \"collectibles\" by the IRS, so long-term gains can "
-            "be taxed at up to 28% (vs. the usual 15–20% for stocks). "
-            "Even casual sellers owe tax on net gains."
+            "be taxed at up to 28% (vs. the 0/15/20% brackets that apply to "
+            "stocks). Even casual sellers owe tax on net gains."
         ),
         keywords=("taxes", "pay", "sales", "owe", "irs", "card", "selling"),
     ),
@@ -46,12 +46,16 @@ _ENTRIES: tuple[KBEntry, ...] = (
         key="1099k_threshold",
         question="What's the 1099-K threshold?",
         answer=(
-            "For tax year 2025 the federal 1099-K threshold is $2,500 in "
-            "gross payments (it drops to $600 in 2026). Several states set "
-            "lower thresholds — MA, VT, VA, MD, IL, NJ, and DC are at "
-            "$600 already. Important: even if you don't get a 1099-K, you "
-            "still owe tax on net gains. The form is just paperwork; the "
-            "tax liability exists regardless."
+            "After the One Big Beautiful Bill Act (OBBBA), the federal 1099-K "
+            "threshold is back to the original IRC §6050W rule: $20,000 AND "
+            "200+ transactions on a single platform in a calendar year. "
+            "BOTH conditions must be met. OBBBA repealed the ARPA $600 trigger "
+            "and applied the restored threshold retroactively to 2022. "
+            "A handful of states set lower state-level thresholds (MA, VT, VA, "
+            "MD, IL, NJ, DC), so you may still receive a state 1099-K below "
+            "the federal cap. Most important: even if no 1099-K is issued, "
+            "every dollar of profit on a card sale is still taxable. The "
+            "form is paperwork; the tax obligation is yours regardless."
         ),
         keywords=("1099", "1099-k", "1099k", "threshold", "form", "report"),
     ),
@@ -92,15 +96,23 @@ _ENTRIES: tuple[KBEntry, ...] = (
         key="fifo_vs_lifo",
         question="FIFO vs LIFO — which lot method should I use?",
         answer=(
-            "FIFO (first-in-first-out) is the IRS default and what most card "
-            "sellers use — when you sell a card, you assume you sold the "
-            "earliest acquired copy. LIFO sells the most recent first.\n\n"
-            "FIFO tends to surface long-term holding periods (the older a "
-            "card is, the more likely it's been held >1 year). LIFO often "
-            "produces smaller gains in rising markets, but cards bought "
-            "recently are usually short-term, which is taxed at higher rates. "
-            "Specific identification is also allowed if you can document "
-            "exactly which copy you sold (serial number, slab cert)."
+            "For INVESTORS (capital-asset treatment): only two methods are "
+            "available. Specific identification — pick the exact copy sold "
+            "if you can prove it (serial number, slab cert). Otherwise FIFO "
+            "(first-in, first-out) is the IRS default — you're treated as "
+            "having sold the earliest-acquired copy first. LIFO is NOT a "
+            "permitted method for capital assets — the rule from "
+            "Treas. Reg. §1.1012-1(c) (written for securities) is the model "
+            "the IRS applies.\n\n"
+            "For DEALERS using inventory accounting (§§471/472): LIFO is "
+            "allowed but requires a Form 970 election plus the conformity "
+            "rule (you have to use LIFO for your books too). Most card "
+            "dealers don't bother — FIFO or specific-ID is simpler and the "
+            "tax difference rarely justifies the paperwork.\n\n"
+            "Practical takeaway: FIFO tends to surface long-term holding "
+            "periods (older copies are more likely held >1 year, so they "
+            "hit the 28% cap rather than ordinary rates). Specific ID gives "
+            "you the most control if you have the documentation."
         ),
         keywords=("fifo", "lifo", "lot", "method", "identification", "specific"),
     ),
@@ -168,9 +180,9 @@ _ENTRIES: tuple[KBEntry, ...] = (
         question="What's the collectibles tax rate?",
         answer=(
             "For long-term capital gains, collectibles are taxed at a maximum "
-            "of 28% (vs. 15% or 20% for most other assets). Sports cards, "
-            "TCGs, and other trading cards all count as collectibles under "
-            "IRC §408(m).\n\n"
+            "of 28% (vs. the 0%, 15%, or 20% brackets that apply to most "
+            "other assets). Sports cards, TCGs, and other trading cards all "
+            "count as collectibles under IRC §408(m).\n\n"
             "The 28% is a CAP, not a flat rate — if your ordinary income "
             "bracket is below 28%, you pay your ordinary rate. Short-term "
             "gains (held ≤1 year) are just taxed as ordinary income."
@@ -185,10 +197,17 @@ _ENTRIES: tuple[KBEntry, ...] = (
             "— there isn't usually a separate \"collectibles\" rate at the "
             "state level. A few notable cases:\n\n"
             "• California taxes collectibles at full ordinary rates (up to "
-            "13.3%).\n"
-            "• New York adds state + NYC tax (combined up to ~14.8%).\n"
-            "• 9 states have no state income tax at all (FL, TX, TN, WA, NV, "
-            "WY, SD, AK, NH on wages).\n\n"
+            "13.3%, or 14.4% with the 1% mental-health surtax over $1M).\n"
+            "• New York adds state + NYC tax (combined up to ~14.78%).\n"
+            "• Massachusetts taxes long-term gains on collectibles at a "
+            "special 12% rate (vs. 5% for most other LT gains).\n"
+            "• Washington has no broad income tax but imposes a 7% "
+            "long-term capital-gains \"excise\" tax on gains above an "
+            "indexed threshold (~$270k in 2024, ~$278k in 2025). The WA DOR "
+            "treats tangible personal property (including cards) as covered, "
+            "so big card gains by WA residents can be hit.\n"
+            "• 8 other states have no broad state income tax (FL, TX, TN, "
+            "NV, WY, SD, AK, NH).\n\n"
             "CardTax's tax summary includes per-state estimates. Set your "
             "state in Settings."
         ),
@@ -231,8 +250,12 @@ _ENTRIES: tuple[KBEntry, ...] = (
         answer=(
             "Only if you're classified as a DEALER (running a card business). "
             "Dealer income flows through Schedule C, which is subject to "
-            "self-employment tax — 15.3% on the first ~$168k of net earnings "
-            "(2025), then 2.9% Medicare above that.\n\n"
+            "self-employment tax — 15.3% (12.4% Social Security + 2.9% "
+            "Medicare) on the first $184,500 of net SE earnings for 2026 "
+            "($176,100 for 2025), then 2.9% Medicare only above that. An "
+            "additional 0.9% Medicare surtax applies once SE earnings exceed "
+            "$200k single / $250k MFJ. You can deduct half of the regular SE "
+            "tax on Schedule 1.\n\n"
             "Investors and hobbyists do NOT pay SE tax — capital gains aren't "
             "subject to it. This is one reason the dealer/investor line "
             "matters so much."
@@ -328,15 +351,17 @@ _ENTRIES: tuple[KBEntry, ...] = (
         key="kiddie_tax",
         question="What if my kid sells cards?",
         answer=(
-            "Kiddie tax (§1(g)) applies to children under 18 (or under 24 if "
-            "a full-time student supported by parents). For 2025:\n\n"
+            "Kiddie tax (§1(g)) applies to a child who is (a) under 18 at "
+            "year-end; (b) 18 with earned income ≤ half of their support; "
+            "or (c) a full-time student aged 19–23 with earned income ≤ "
+            "half of their support. For 2025:\n\n"
             "• First $1,350 of unearned income — tax free\n"
             "• Next $1,350 — taxed at the child's rate\n"
             "• Above $2,700 — taxed at the PARENT'S marginal rate\n\n"
             "If the child is genuinely running a business (e.g., running a "
-            "Whatnot show), it might be earned income on Schedule C instead, "
-            "which sidesteps kiddie tax. CardTax has a kiddie-filer toggle "
-            "in Settings."
+            "Whatnot show), the income may be earned income on Schedule C "
+            "instead, which sidesteps kiddie tax. CardTax has a kiddie-filer "
+            "toggle in Settings."
         ),
         keywords=("kid", "kids", "child", "children", "minor", "kiddie"),
     ),

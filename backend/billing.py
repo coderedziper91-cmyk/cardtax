@@ -47,7 +47,7 @@ TIERS: dict[str, dict] = {
             "CSV import (eBay, Whatnot)",
             "Hobby / Investor / Dealer quiz",
         ],
-        "not_included": ["AI card scanner", "Priority support"],
+        "not_included": ["AI card scanner (coming soon)", "Priority support"],
         "cta": "Current plan",
         "price_env": None,  # no Stripe price
     },
@@ -67,7 +67,7 @@ TIERS: dict[str, dict] = {
             "Cost-basis components (grading, shipping, etc.)",
             "Quarterly estimated tax tracker",
         ],
-        "not_included": ["AI card scanner"],
+        "not_included": ["AI card scanner (coming soon)"],
         "cta": "Upgrade to Starter",
         "price_env": "STRIPE_PRICE_STARTER",
     },
@@ -106,7 +106,7 @@ TIERS: dict[str, dict] = {
         "features": [
             "Unlimited transactions",
             "Everything in Pro",
-            "AI card scanner (GPT-Vision)",
+            "AI card scanner (coming soon)",
             "Form 8949 CSV export",
             "Schedule C dealer support",
             "Concierge onboarding",

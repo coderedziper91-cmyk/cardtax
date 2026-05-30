@@ -1,18 +1,25 @@
 """
 CardTax tax engine.
 
-Implements the 2025 OBBBA (One Big Beautiful Bill Act) rules for collectibles.
+Implements 2026 federal tax rules for collectibles, incorporating the OBBBA
+(One Big Beautiful Bill Act, P.L. 119-21, signed July 4, 2025).
 
 Key statutes / authorities referenced:
 - IRC §1(h)(4)-(5): collectibles gain taxed at max 28%
 - IRC §408(m)(2): definition of "collectible"
-- IRC §1411: Net Investment Income Tax (3.8%)
+- IRC §1411: Net Investment Income Tax (3.8%, thresholds not indexed)
 - IRC §183: hobby loss / 9-factor test
 - IRC §1091: wash sale (does NOT apply to collectibles)
-- IRC §6050W / 1099-K thresholds (OBBBA restored 2025 threshold)
+- IRC §6050W / 1099-K thresholds — OBBBA §70432 PERMANENTLY restored the
+  $20,000-AND-200-transactions threshold retroactively to tax years
+  beginning after 12/31/2021. The proposed $600 threshold never took effect.
 
-All bracket figures below are the 2025 inflation-adjusted figures published by
-the IRS (Rev. Proc. 2024-40) and confirmed by the OBBBA.
+2026 inflation-adjusted figures (brackets, standard deduction, AMT exemption
+and breakpoint, QBI threshold, kiddie tax) come from IRS Rev. Proc. 2025-32
+(IR-2025-103, October 2025). OBBBA changes that take effect in 2026 — AMT
+phaseout rate doubling to 50%, AMT phaseout threshold cut to $500k / $1M,
+expanded QBI phase-in range, new $400 QBI minimum, and the 0.5% AGI
+charitable floor for itemizers — are reflected below.
 """
 
 from __future__ import annotations
@@ -24,55 +31,61 @@ from typing import Iterable, Sequence
 
 
 # ---------------------------------------------------------------------------
-# 2025 ordinary income tax brackets (post-OBBBA)
+# 2026 ordinary income tax brackets (Rev. Proc. 2025-32)
 # ---------------------------------------------------------------------------
 
-ORDINARY_BRACKETS_2025 = {
+ORDINARY_BRACKETS_2026 = {
     "single": [
-        (11_925, 0.10),
-        (48_475, 0.12),
-        (103_350, 0.22),
-        (197_300, 0.24),
-        (250_525, 0.32),
-        (626_350, 0.35),
+        (12_400, 0.10),
+        (50_400, 0.12),
+        (105_700, 0.22),
+        (201_775, 0.24),
+        (256_225, 0.32),
+        (640_600, 0.35),
         (float("inf"), 0.37),
     ],
     "mfj": [
-        (23_850, 0.10),
-        (96_950, 0.12),
-        (206_700, 0.22),
-        (394_600, 0.24),
-        (501_050, 0.32),
-        (751_600, 0.35),
+        (24_800, 0.10),
+        (100_800, 0.12),
+        (211_400, 0.22),
+        (403_550, 0.24),
+        (512_450, 0.32),
+        (768_700, 0.35),
         (float("inf"), 0.37),
     ],
     "mfs": [
-        (11_925, 0.10),
-        (48_475, 0.12),
-        (103_350, 0.22),
-        (197_300, 0.24),
-        (250_525, 0.32),
-        (375_800, 0.35),
+        (12_400, 0.10),
+        (50_400, 0.12),
+        (105_700, 0.22),
+        (201_775, 0.24),
+        (256_225, 0.32),
+        (384_350, 0.35),
         (float("inf"), 0.37),
     ],
     "hoh": [
-        (17_000, 0.10),
-        (64_850, 0.12),
-        (103_350, 0.22),
-        (197_300, 0.24),
-        (250_500, 0.32),
-        (626_350, 0.35),
+        (17_700, 0.10),
+        (67_450, 0.12),
+        (105_700, 0.22),
+        (201_775, 0.24),
+        (256_200, 0.32),
+        (640_600, 0.35),
         (float("inf"), 0.37),
     ],
 }
 
-# 2025 standard deduction (OBBBA increased these)
-STANDARD_DEDUCTION_2025 = {
-    "single": 15_000,
-    "mfj": 30_000,
-    "mfs": 15_000,
-    "hoh": 22_500,
+# 2026 standard deduction (Rev. Proc. 2025-32; OBBBA permanent base)
+STANDARD_DEDUCTION_2026 = {
+    "single": 16_100,
+    "mfj": 32_200,
+    "mfs": 16_100,
+    "hoh": 24_150,
 }
+
+# Backwards-compatible aliases — _2025-suffixed names now point at 2026 values
+# so external imports continue to resolve. The tax engine is being run for the
+# 2026 tax year (current year as of the application's active filing window).
+ORDINARY_BRACKETS_2025 = ORDINARY_BRACKETS_2026
+STANDARD_DEDUCTION_2025 = STANDARD_DEDUCTION_2026
 
 # Net Investment Income Tax thresholds (IRC §1411 — not indexed for inflation)
 NIIT_THRESHOLDS = {
@@ -86,11 +99,16 @@ NIIT_RATE = 0.038
 # Collectibles maximum long-term rate (IRC §1(h)(4))
 COLLECTIBLES_MAX_LTCG_RATE = 0.28
 
-# 1099-K reporting thresholds (post-OBBBA restoration)
+# 1099-K reporting thresholds — OBBBA repealed the ARPA $600 threshold and
+# restored the original IRC §6050W threshold ($20,000 AND 200 transactions)
+# retroactively to tax year 2022. Both conditions must be met for a platform
+# to be required to issue Form 1099-K.
 FORM_1099K_THRESHOLDS = {
-    2024: {"amount": 5_000, "transactions": 0, "note": "ARP transition year"},
-    2025: {"amount": 20_000, "transactions": 200, "note": "OBBBA restored pre-ARP threshold"},
-    2026: {"amount": 600, "transactions": 0, "note": "OBBBA sunset — $600 threshold returns"},
+    2022: {"amount": 20_000, "transactions": 200, "note": "OBBBA restored original §6050W threshold retroactively"},
+    2023: {"amount": 20_000, "transactions": 200, "note": "OBBBA restored original §6050W threshold retroactively"},
+    2024: {"amount": 20_000, "transactions": 200, "note": "OBBBA restored original §6050W threshold retroactively"},
+    2025: {"amount": 20_000, "transactions": 200, "note": "Original §6050W threshold — both conditions required"},
+    2026: {"amount": 20_000, "transactions": 200, "note": "Original §6050W threshold — both conditions required"},
 }
 
 LONG_TERM_HOLDING_DAYS = 366  # >1 year, per IRC §1222
@@ -328,10 +346,10 @@ class TaxSummary:
 
 
 def ordinary_tax(taxable_income: float, filing_status: FilingStatus) -> float:
-    """Compute federal income tax on taxable income using 2025 brackets."""
+    """Compute federal income tax on taxable income using 2026 brackets."""
     if taxable_income <= 0:
         return 0.0
-    brackets = ORDINARY_BRACKETS_2025[filing_status.value]
+    brackets = ORDINARY_BRACKETS_2026[filing_status.value]
     tax = 0.0
     lower = 0.0
     for upper, rate in brackets:
@@ -347,7 +365,7 @@ def marginal_rate(taxable_income: float, filing_status: FilingStatus) -> float:
     """Marginal bracket rate at a given taxable-income point."""
     if taxable_income < 0:
         taxable_income = 0
-    for upper, rate in ORDINARY_BRACKETS_2025[filing_status.value]:
+    for upper, rate in ORDINARY_BRACKETS_2026[filing_status.value]:
         if taxable_income <= upper:
             return rate
     return 0.37
@@ -479,7 +497,7 @@ def summarize(
     notes: list[str] = []
 
     # Use standard deduction as a baseline for taxable-income estimate
-    std_ded = STANDARD_DEDUCTION_2025[filing_status.value]
+    std_ded = STANDARD_DEDUCTION_2026[filing_status.value]
     base_taxable = max(0.0, ordinary_income - std_ded)
     base_marginal = marginal_rate(base_taxable, filing_status)
 
@@ -512,7 +530,7 @@ def summarize(
 
     elif classification == Classification.DEALER:
         # Dealer = inventory treatment, gross profit is ordinary income on Sch C.
-        # Subject to self-employment tax (15.3% on first $168,600 / 2.9% above).
+        # Subject to self-employment tax (15.3% on first $184,500 / 2.9% above).
         dealer_profit = gross_receipts - total_basis - total_fees
         if dealer_profit > 0:
             extra_ordinary_tax = (
@@ -521,14 +539,14 @@ def summarize(
             )
             # Self-employment tax: 15.3% on 92.35% of net SE earnings up to SS cap
             se_base = dealer_profit * 0.9235
-            ss_cap_2025 = 168_600
-            ss_tax = min(se_base, ss_cap_2025) * 0.124
+            ss_cap = SE_SS_WAGE_BASE_2026
+            ss_tax = min(se_base, ss_cap) * 0.124
             medicare_tax = se_base * 0.029
             se_tax = ss_tax + medicare_tax
             extra_ordinary_tax += se_tax
             notes.append(
                 f"Self-employment tax estimated at ${se_tax:,.2f} "
-                f"(12.4% SS up to ${ss_cap_2025:,}, 2.9% Medicare uncapped)."
+                f"(12.4% SS up to ${ss_cap:,}, 2.9% Medicare uncapped)."
             )
 
     elif classification == Classification.HOBBY:
@@ -558,8 +576,9 @@ def summarize(
 
     # 1099-K threshold notes
     notes.append(
-        f"2025 1099-K threshold: $20,000 AND 200 transactions per platform. "
-        f"In 2026 the threshold drops to $600 — every active seller will receive a 1099-K."
+        "1099-K threshold (post-OBBBA): $20,000 AND 200 transactions per platform — "
+        "both conditions must be met. The ARPA $600 trigger was repealed retroactively "
+        "to 2022, but your gain is taxable whether or not a 1099-K is issued."
     )
 
     # Wash sale exception (advantage for collectibles)
@@ -873,6 +892,13 @@ def loss_harvest_suggestions(
 # ---------------------------------------------------------------------------
 
 
+# OBBBA §70425: starting in tax year 2026, itemized charitable contribution
+# deductions must exceed 0.5% of AGI before any deduction is allowed. The
+# first 0.5% of AGI in contributions is non-deductible. The 60% AGI cash
+# limit for public charities was made permanent by OBBBA.
+CHARITABLE_AGI_FLOOR_RATE = 0.005
+
+
 def charitable_deduction(
     donations: Sequence[Transaction],
     adjusted_gross_income: float,
@@ -890,6 +916,8 @@ def charitable_deduction(
         sells the card at auction), the deduction is reduced to BASIS regardless
         of holding period. Cards donated to most charities → unrelated use → basis only.
       - 5-year carryforward for excess (IRC §170(d)(1)).
+      - 2026+: OBBBA 0.5% AGI floor (§170) — first 0.5% of AGI is non-deductible
+        for itemizers. Reduces `allowed`, not `carryforward`.
     """
     fmv_total = 0.0
     basis_total = 0.0
@@ -921,8 +949,22 @@ def charitable_deduction(
     # We apply the 30% limit broadly because cards are tangible personal property.
     agi = max(0.0, adjusted_gross_income)
     limit = 0.30 * agi
-    allowed = min(deduction_before_limit, limit)
-    carryforward = max(0.0, deduction_before_limit - allowed)
+    allowed_pre_floor = min(deduction_before_limit, limit)
+
+    # OBBBA 0.5% AGI floor (2026+): the first 0.5% of AGI in itemized
+    # charitable contributions is non-deductible. The disallowed amount is
+    # permanently lost (not carried forward, per OBBBA §70425 mechanics).
+    agi_floor = CHARITABLE_AGI_FLOOR_RATE * agi
+    floor_disallowed = min(allowed_pre_floor, agi_floor)
+    allowed = max(0.0, allowed_pre_floor - floor_disallowed)
+
+    carryforward = max(0.0, deduction_before_limit - allowed_pre_floor)
+
+    if floor_disallowed > 0:
+        notes.append(
+            f"${floor_disallowed:,.2f} disallowed under OBBBA §170 0.5%-of-AGI floor "
+            f"(2026+ itemizer rule). This amount is permanently lost, not carried forward."
+        )
 
     if carryforward > 0:
         notes.append(
@@ -935,6 +977,7 @@ def charitable_deduction(
         "basis_total": round(basis_total, 2),
         "computed_deduction": round(deduction_before_limit, 2),
         "agi_limit": round(limit, 2),
+        "agi_floor_disallowed": round(floor_disallowed, 2),
         "allowed": round(allowed, 2),
         "carryforward": round(carryforward, 2),
         "notes": notes,
@@ -1061,26 +1104,35 @@ LIKE_KIND_EXCHANGE_NOTE = (
 
 
 # ---------------------------------------------------------------------------
-# Alternative Minimum Tax (Form 6251) — 2025 figures
+# Alternative Minimum Tax (Form 6251) — 2026 figures (Rev. Proc. 2025-32)
 # ---------------------------------------------------------------------------
+# OBBBA Section 70106 made the TCJA AMT exemption permanent and, starting
+# in 2026, (a) lowered the exemption phaseout threshold from prior-law
+# inflation-adjusted amounts ($626,350 / $1,252,700) back to $500,000 /
+# $1,000,000, and (b) doubled the phaseout rate from 25% to 50%.
 
-AMT_EXEMPTION_2025 = {
-    "single": 88_100,
-    "mfj":    137_000,
-    "mfs":    68_500,
-    "hoh":    88_100,
+AMT_EXEMPTION_2026 = {
+    "single": 90_100,
+    "mfj":    140_200,
+    "mfs":    70_100,
+    "hoh":    90_100,
 }
-# Exemption phase-out: 25% reduction over the threshold; fully phased out
-# when AMTI exceeds threshold + 4 × exemption.
-AMT_EXEMPTION_PHASEOUT_START_2025 = {
-    "single": 626_350,
-    "mfj":    1_252_700,
-    "mfs":    626_350,
-    "hoh":    626_350,
+# OBBBA-cut 2026 phaseout thresholds (Section 70106). These are no longer
+# the inflation-adjusted continuation of the pre-OBBBA TCJA values.
+AMT_EXEMPTION_PHASEOUT_START_2026 = {
+    "single": 500_000,
+    "mfj":    1_000_000,
+    "mfs":    500_000,
+    "hoh":    500_000,
 }
-AMT_BREAKPOINT_26_28 = 239_100  # $119,550 if MFS
+AMT_EXEMPTION_PHASEOUT_RATE = 0.50  # OBBBA doubled this from 0.25 starting 2026
+AMT_BREAKPOINT_26_28 = 244_500  # $122,250 if MFS (Rev. Proc. 2025-32)
 AMT_RATE_LOW = 0.26
 AMT_RATE_HIGH = 0.28
+
+# Backwards-compatible aliases
+AMT_EXEMPTION_2025 = AMT_EXEMPTION_2026
+AMT_EXEMPTION_PHASEOUT_START_2025 = AMT_EXEMPTION_PHASEOUT_START_2026
 
 
 def amt_calculation(
@@ -1096,18 +1148,22 @@ def amt_calculation(
     Collectibles 28% rate gain is included in AMTI but the 28% federal rate
     is preserved (per IRC §55(b)(3)). We compute the simplified TMT:
       TMT = 28%-rate-gain tax + AMT on remaining AMTI.
+
+    OBBBA §70106 phaseout (2026 onward): 50% reduction on AMTI excess over
+    threshold ($500k single / $1M MFJ), fully phased out faster than under
+    pre-OBBBA TCJA.
     """
     fs = filing_status.value
-    exemption = AMT_EXEMPTION_2025[fs]
-    phase_start = AMT_EXEMPTION_PHASEOUT_START_2025[fs]
+    exemption = AMT_EXEMPTION_2026[fs]
+    phase_start = AMT_EXEMPTION_PHASEOUT_START_2026[fs]
     breakpoint = AMT_BREAKPOINT_26_28 / 2 if fs == "mfs" else AMT_BREAKPOINT_26_28
 
     amti = max(0.0, regular_taxable_income) + max(0.0, collectible_lt_gain)
 
-    # Exemption phase-out
+    # Exemption phase-out (50% rate post-OBBBA)
     if amti > phase_start:
         excess = amti - phase_start
-        exemption = max(0.0, exemption - 0.25 * excess)
+        exemption = max(0.0, exemption - AMT_EXEMPTION_PHASEOUT_RATE * excess)
 
     amti_after_exemption = max(0.0, amti - exemption)
 
@@ -1146,12 +1202,18 @@ def amt_calculation(
 # Self-Employment tax (Schedule SE) — broken out for dealers
 # ---------------------------------------------------------------------------
 
-SE_SS_WAGE_BASE_2025 = 168_600
+# 2026 Social Security taxable wage base = $184,500 (SSA, Oct 2025
+# Fact Sheet). 2025 base was $176,100; 2024 was $168,600. Additional
+# Medicare 0.9% thresholds at IRC §1401(b)(2) are NOT indexed.
+SE_SS_WAGE_BASE_2026 = 184_500
 SE_RATE_SS = 0.124       # Social Security (12.4%)
 SE_RATE_MEDICARE = 0.029  # Medicare (2.9%)
 SE_RATE_ADDL_MEDICARE = 0.009  # Additional Medicare 0.9% over $200k single / $250k MFJ
 SE_ADDL_MEDICARE_THRESHOLD = {"single": 200_000, "mfj": 250_000, "mfs": 125_000, "hoh": 200_000}
 SE_NET_EARNINGS_FACTOR = 0.9235  # §1402(a)
+
+# Backwards-compatible alias
+SE_SS_WAGE_BASE_2025 = SE_SS_WAGE_BASE_2026
 
 
 def self_employment_tax(net_se_earnings: float, filing_status: FilingStatus) -> dict:
@@ -1163,7 +1225,7 @@ def self_employment_tax(net_se_earnings: float, filing_status: FilingStatus) -> 
     deductible-half adjustment (Schedule 1 line 15 = ½ of regular SE tax).
     """
     se_base = max(0.0, net_se_earnings) * SE_NET_EARNINGS_FACTOR
-    ss_tax = min(se_base, SE_SS_WAGE_BASE_2025) * SE_RATE_SS
+    ss_tax = min(se_base, SE_SS_WAGE_BASE_2026) * SE_RATE_SS
     medicare_tax = se_base * SE_RATE_MEDICARE
 
     threshold = SE_ADDL_MEDICARE_THRESHOLD[filing_status.value]
@@ -1184,11 +1246,23 @@ def self_employment_tax(net_se_earnings: float, filing_status: FilingStatus) -> 
 
 
 # ---------------------------------------------------------------------------
-# §199A Qualified Business Income deduction (dealers only)
+# §199A Qualified Business Income deduction (dealers only) — 2026
 # ---------------------------------------------------------------------------
+# OBBBA made the 20% QBI deduction permanent and, starting 2026:
+#   - expanded the phase-in range from $50k/$100k to $75k/$150k
+#   - added a $400 minimum deduction if QBI is at least $1,000 from an
+#     active qualified trade or business (regardless of W-2 wage limit)
+# Thresholds and phase-in ranges below are 2026 amounts per Rev. Proc.
+# 2025-32 with the OBBBA-expanded phase-in.
 
-QBI_THRESHOLD_2025 = {"single": 197_300, "mfj": 394_600, "mfs": 197_300, "hoh": 197_300}
-QBI_PHASEIN_RANGE = {"single": 50_000, "mfj": 100_000, "mfs": 50_000, "hoh": 50_000}
+QBI_THRESHOLD_2026 = {"single": 201_750, "mfj": 403_500, "mfs": 201_750, "hoh": 201_750}
+QBI_PHASEIN_RANGE_2026 = {"single": 75_000, "mfj": 150_000, "mfs": 75_000, "hoh": 75_000}
+QBI_MINIMUM_DEDUCTION = 400
+QBI_MINIMUM_DEDUCTION_QBI_FLOOR = 1_000  # QBI must be at least this to claim the $400 floor
+
+# Backwards-compatible aliases
+QBI_THRESHOLD_2025 = QBI_THRESHOLD_2026
+QBI_PHASEIN_RANGE = QBI_PHASEIN_RANGE_2026
 
 
 def qbi_deduction(
@@ -1204,13 +1278,16 @@ def qbi_deduction(
     §199A QBI deduction. Card dealing is NOT a specified service trade or
     business (SSTB), so the deduction is generally available regardless of
     income, subject to the W-2 wage / UBIA-of-qualified-property limitation.
+
+    OBBBA-permanent 2026: $400 minimum deduction if QBI ≥ $1,000 from an
+    active qualified business. Phase-in range expanded to $75k single / $150k MFJ.
     """
     if qualified_business_income <= 0:
         return {"deduction": 0.0, "tentative": 0.0, "applies": False,
                 "note": "No QBI deduction — qualified business income is zero or negative."}
 
-    threshold = QBI_THRESHOLD_2025[filing_status.value]
-    phasein_top = threshold + QBI_PHASEIN_RANGE[filing_status.value]
+    threshold = QBI_THRESHOLD_2026[filing_status.value]
+    phasein_top = threshold + QBI_PHASEIN_RANGE_2026[filing_status.value]
     ti = max(0.0, taxable_income_before_qbi)
 
     # Tentative 20% deduction
@@ -1242,12 +1319,24 @@ def qbi_deduction(
             notes.append(f"Above full phase-in: limited to greater of 50% W-2 wages or 25% wages + 2.5% UBIA = ${wage_limit:,.2f}.")
         else:
             # Phase-in range: blend
-            pct_phased = (ti - threshold) / QBI_PHASEIN_RANGE[filing_status.value]
+            pct_phased = (ti - threshold) / QBI_PHASEIN_RANGE_2026[filing_status.value]
             limited = min(tentative, wage_limit, ti_limit)
             deduction = tentative - (tentative - limited) * pct_phased
             notes.append(f"In phase-in range ({pct_phased*100:.0f}% phased). Blended deduction.")
 
     deduction = max(0.0, min(deduction, ti_limit))
+
+    # OBBBA $400 minimum deduction (2026 onward) — applies if QBI from active
+    # qualified trade or business is at least $1,000. Does NOT apply to SSTB
+    # taxpayers whose deduction is fully phased out above the SSTB threshold.
+    if (
+        qualified_business_income >= QBI_MINIMUM_DEDUCTION_QBI_FLOOR
+        and not (is_sstb and ti >= phasein_top)
+        and deduction < QBI_MINIMUM_DEDUCTION
+    ):
+        deduction = min(QBI_MINIMUM_DEDUCTION, ti_limit) if ti_limit > 0 else QBI_MINIMUM_DEDUCTION
+        notes.append("OBBBA $400 minimum QBI deduction applied (QBI ≥ $1,000 from active trade/business).")
+
     return {
         "deduction": round(deduction, 2),
         "tentative": round(tentative, 2),
@@ -1295,8 +1384,14 @@ def nol_carryforward(
 # Kiddie tax (IRC §1(g))
 # ---------------------------------------------------------------------------
 
-KIDDIE_TAX_UNEARNED_FLOOR_2025 = 1_350    # first $1,350 untaxed (std deduction)
-KIDDIE_TAX_PARENT_RATE_THRESHOLD_2025 = 2_700  # over $2,700: parent rate
+# Kiddie tax (IRC §1(g)) — 2026 amounts per Rev. Proc. 2025-32. The IRS
+# left these unchanged from 2025 due to rounding of the inflation adjustment.
+KIDDIE_TAX_UNEARNED_FLOOR_2026 = 1_350    # first $1,350 untaxed (std deduction)
+KIDDIE_TAX_PARENT_RATE_THRESHOLD_2026 = 2_700  # over $2,700: parent rate
+
+# Backwards-compatible aliases
+KIDDIE_TAX_UNEARNED_FLOOR_2025 = KIDDIE_TAX_UNEARNED_FLOOR_2026
+KIDDIE_TAX_PARENT_RATE_THRESHOLD_2025 = KIDDIE_TAX_PARENT_RATE_THRESHOLD_2026
 
 
 def kiddie_tax_check(

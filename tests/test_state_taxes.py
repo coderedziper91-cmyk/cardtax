@@ -60,13 +60,14 @@ class TestNewYork:
         assert STATES["NY"].top_rate == pytest.approx(0.109)
 
     def test_ny_tax_at_low_income(self):
-        # $10k income — NY first bracket is 4% on first $8,500, then 4.5%
-        # tax = 8500*0.04 + 1500*0.045 = 340 + 67.5 = 407.5
+        # $10k income — 2026 NY rates (FY26 budget A3009 cut the lowest five brackets
+        # by 0.1pp): 3.9% on first $8,500, then 4.4%.
+        # tax = 8500*0.039 + 1500*0.044 = 331.5 + 66.0 = 397.5
         out = compute_state_tax(
             "NY", ordinary_income=10_000, short_term_gain=0,
             long_term_collectible_gain=0, filing_status="single",
         )
-        assert out["tax_on_ordinary"] == pytest.approx(407.5)
+        assert out["tax_on_ordinary"] == pytest.approx(397.5)
 
     def test_nyc_local_brackets(self):
         # NYC has 4 brackets (3.078% to 3.876%)
@@ -258,11 +259,11 @@ class TestPennsylvania:
         assert "does NOT" in STATES["PA"].notes or "loss" in STATES["PA"].notes.lower()
 
     def test_pa_philadelphia_wage_tax(self):
-        # Philly 3.75% residents
+        # Philly 3.74% residents (effective July 1, 2025, per City of Philadelphia DOR)
         result = compute_local_tax(
             "PA:Philadelphia", taxable_income=50_000, state_tax_total=0,
         )
-        assert result["total_local_tax"] == pytest.approx(1_875.0)
+        assert result["total_local_tax"] == pytest.approx(1_870.0)
 
 
 # ---------------------------------------------------------------------------

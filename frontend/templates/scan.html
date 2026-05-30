@@ -8,15 +8,15 @@
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
   <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="Snap a photo of a card — CardTax identifies it and seeds a transaction.">
+  <meta name="description" content="The AI card scanner is coming soon — use manual entry or CSV import in the meantime.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="CardTax">
-  <meta property="og:title" content="Scan a card">
-  <meta property="og:description" content="Snap a photo of a card — CardTax identifies it and seeds a transaction.">
+  <meta property="og:title" content="Card scanner — coming soon">
+  <meta property="og:description" content="The AI card scanner is coming soon — use manual entry or CSV import in the meantime.">
   <meta property="og:image" content="/static/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Scan a card">
-  <meta name="twitter:description" content="Snap a photo of a card — CardTax identifies it and seeds a transaction.">
+  <meta name="twitter:title" content="Card scanner — coming soon">
+  <meta name="twitter:description" content="The AI card scanner is coming soon — use manual entry or CSV import in the meantime.">
   <meta name="twitter:image" content="/static/og-image.png">
   <link rel="stylesheet" href="/static/app.css">
   <script src="/static/analytics.js" defer></script>
@@ -31,192 +31,46 @@
       <div class="page-header">
         <div>
           <div class="title">Card scanner</div>
-          <div class="subtitle">Take a photo of a card and we'll identify it and add it to your collection.</div>
+          <div class="subtitle">Snap a card, get the player, year, set, and value in one tap.</div>
         </div>
-        <div id="ai-status"></div>
+        <span class="badge badge-warning">Coming soon</span>
       </div>
 
-      <div id="step-upload" class="card">
-        <div id="dropzone" class="dropzone">
-          <div class="dropzone-icon">${ICONS.camera}</div>
-          <div class="dropzone-title">Drop a card photo or click to upload</div>
-          <div class="dropzone-sub">Front of card works best · JPEG, PNG, or WEBP</div>
-          <div style="display:flex;gap:8px;justify-content:center;margin-top:18px">
-            <button class="btn btn-primary" id="pick-file">Choose photo</button>
-            <button class="btn btn-secondary" id="pick-camera">Use camera</button>
-          </div>
-          <input type="file" accept="image/*" id="file-input" hidden>
-          <input type="file" accept="image/*" capture="environment" id="camera-input" hidden>
+      <div class="card" style="text-align:center;padding:48px 32px">
+        <div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:var(--bg-secondary);border:1px solid var(--border);margin-bottom:20px;color:var(--text-secondary)">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </div>
+        <div class="card-title" style="font-size:22px;margin-bottom:8px">AI card scanner — coming soon</div>
+        <p style="max-width:520px;margin:0 auto 24px;color:var(--text-secondary);line-height:1.6">
+          We're putting the finishing touches on photo-based card identification.
+          When it ships, you'll point your camera at a card and CardTax will fill
+          in the player, year, set, parallel, and a fair-market value estimate
+          automatically.
+        </p>
+        <p style="max-width:520px;margin:0 auto 28px;color:var(--text-secondary);line-height:1.6;font-size:14px">
+          In the meantime, you can add cards manually or bulk-import a CSV from
+          eBay, Whatnot, COMC, Mercari, or TCGplayer — every other CardTax
+          feature works exactly the same.
+        </p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <a href="/transactions" class="btn btn-primary">Add a card manually</a>
+          <a href="/upload" class="btn btn-secondary">Import a CSV</a>
         </div>
       </div>
 
-      <div id="step-analyze" class="card" style="display:none">
-        <div style="display:flex;align-items:center;gap:12px">
-          <div class="spinner"></div>
-          <span style="font-weight:500">Identifying card…</span>
-        </div>
-      </div>
-
-      <div id="step-result" style="display:none">
-        <div class="grid grid-2">
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title">Photo</div>
-              <button class="btn btn-ghost btn-sm" id="reset-btn">Try another</button>
-            </div>
-            <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--bg-secondary)">
-              <img id="preview-img" alt="card preview" style="display:block;width:100%;max-height:520px;object-fit:contain">
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title">Identification</div>
-              <span id="confidence-badge" class="badge"></span>
-            </div>
-            <div id="error-msg" class="note note-warning" style="display:none;margin-bottom:14px"></div>
-            <div id="ident-grid"></div>
-
-            <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
-              <div class="eyebrow" style="margin-bottom:12px">Add to collection</div>
-              <div class="grid" style="gap:12px">
-                <label class="field"><span class="field-label">How did you acquire this?</span>
-                  <select class="select" id="f-acq">
-                    <option value="purchase">Purchase</option>
-                    <option value="gift">Gift (carryover basis)</option>
-                    <option value="inheritance">Inheritance (step-up basis)</option>
-                    <option value="break_spot">Break spot</option>
-                    <option value="personal_collection">Personal collection</option>
-                  </select></label>
-                <div class="grid grid-2">
-                  <label class="field"><span class="field-label">Purchase price ($)</span><input class="input" type="number" step="0.01" id="f-purchase-price"></label>
-                  <label class="field"><span class="field-label">Purchase date</span><input class="input" type="date" id="f-purchase-date"></label>
-                </div>
-                <label class="field"><span class="field-label">Bought from</span>
-                  <select class="select" id="f-platform">
-                    <option value="manual">Manual / private</option>
-                    <option value="ebay">eBay</option><option value="whatnot">Whatnot</option><option value="comc">COMC</option>
-                    <option value="lcs">Local card shop</option><option value="show">Card show</option><option value="break">Break</option>
-                  </select></label>
-                <div class="grid grid-2">
-                  <label class="field"><span class="field-label">Grading status</span>
-                    <select class="select" id="f-grade">
-                      <option value="raw">Raw</option>
-                      <option value="psa">PSA</option><option value="bgs">BGS</option>
-                      <option value="cgc">CGC</option><option value="sgc">SGC</option>
-                    </select></label>
-                  <label class="field" id="f-grade-num-wrap" style="display:none"><span class="field-label">Grade</span><input class="input" type="number" step="0.5" min="1" max="10" id="f-grade-num" placeholder="10"></label>
-                </div>
-                <button class="btn btn-primary" id="save-btn">Add to collection</button>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="card" style="margin-top:20px">
+        <div class="card-title" style="margin-bottom:8px">What to expect</div>
+        <ul style="margin:0;padding-left:20px;color:var(--text-secondary);line-height:1.8">
+          <li>Works for Sports, Pokémon, MTG, and Yu-Gi-Oh!</li>
+          <li>Auto-detects parallels, refractors, and serial numbers</li>
+          <li>Pulls a fair-market value estimate so your basis is ready on day one</li>
+          <li>Saves directly to your collection — no double entry</li>
+        </ul>
       </div>
     `;
-
-    // Spinner
-    const style = document.createElement("style");
-    style.textContent = `
-      .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
-      @keyframes spin { to { transform: rotate(360deg); } }
-    `;
-    document.head.appendChild(style);
-
-    let SCAN = null;
-
-    api("GET", "/api/scan/status").then(s => {
-      const el = document.getElementById("ai-status");
-      el.innerHTML = s.ai_available
-        ? `<span class="badge badge-gain">AI scanning enabled</span>`
-        : `<span class="badge badge-warning">Manual mode · set OPENAI_API_KEY for AI</span>`;
-    });
-
-    const fi = document.getElementById("file-input"), ci = document.getElementById("camera-input");
-    document.getElementById("pick-file").addEventListener("click", e => { e.stopPropagation(); fi.click(); });
-    document.getElementById("pick-camera").addEventListener("click", e => { e.stopPropagation(); ci.click(); });
-    fi.addEventListener("change", e => e.target.files[0] && handle(e.target.files[0]));
-    ci.addEventListener("change", e => e.target.files[0] && handle(e.target.files[0]));
-
-    const dz = document.getElementById("dropzone");
-    dz.addEventListener("click", e => { if (e.target.tagName !== "BUTTON" && e.target.tagName !== "INPUT") fi.click(); });
-    dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("dragover"); });
-    dz.addEventListener("dragleave", () => dz.classList.remove("dragover"));
-    dz.addEventListener("drop", e => { e.preventDefault(); dz.classList.remove("dragover"); e.dataTransfer.files[0] && handle(e.dataTransfer.files[0]); });
-
-    document.getElementById("reset-btn").addEventListener("click", () => {
-      SCAN = null;
-      document.getElementById("step-upload").style.display = "block";
-      document.getElementById("step-result").style.display = "none";
-      fi.value = ""; ci.value = "";
-    });
-    document.getElementById("f-grade").addEventListener("change", e => {
-      document.getElementById("f-grade-num-wrap").style.display = e.target.value === "raw" ? "none" : "block";
-    });
-
-    async function handle(file) {
-      document.getElementById("step-upload").style.display = "none";
-      document.getElementById("step-analyze").style.display = "block";
-      const fd = new FormData(); fd.append("file", file);
-      let result;
-      try { result = await (await fetch("/api/scan", { method: "POST", body: fd })).json(); }
-      catch (e) { toast("Scan failed: " + e.message, "error"); document.getElementById("step-analyze").style.display = "none"; document.getElementById("step-upload").style.display = "block"; return; }
-      SCAN = result;
-      document.getElementById("step-analyze").style.display = "none";
-      document.getElementById("step-result").style.display = "block";
-      document.getElementById("preview-img").src = result.image_path || URL.createObjectURL(file);
-
-      const conf = Math.round((result.confidence || 0) * 100);
-      const cb = document.getElementById("confidence-badge");
-      cb.textContent = conf > 0 ? `${conf}% confidence` : "Manual entry";
-      cb.className = "badge " + (conf >= 80 ? "badge-gain" : conf >= 50 ? "badge-warning" : conf > 0 ? "badge-loss" : "");
-
-      const err = document.getElementById("error-msg");
-      if (result.error) { err.textContent = result.error; err.style.display = "block"; } else err.style.display = "none";
-
-      const fields = [
-        ["Card", result.card_name], ["Player / subject", result.player_name],
-        ["Year", result.year], ["Set", result.set_name],
-        ["Card #", result.card_number], ["Parallel", result.parallel_variant || "—"],
-        ["Category", result.sport_or_game], ["Est. value", result.estimated_value_usd ? fmt$(result.estimated_value_usd) : "—"],
-      ];
-      document.getElementById("ident-grid").innerHTML = fields.map(([k, v]) => `
-        <div class="row"><span class="row-label">${escHtml(k)}</span><span class="row-value">${escHtml(v || "—")}</span></div>
-      `).join("");
-      if (result.notes) {
-        document.getElementById("ident-grid").insertAdjacentHTML("beforeend",
-          `<div class="note" style="margin-top:12px;font-size:12.5px">${escHtml(result.notes)}</div>`);
-      }
-
-      document.getElementById("f-purchase-date").value = new Date().toISOString().slice(0,10);
-      if (result.estimated_value_usd) document.getElementById("f-purchase-price").value = result.estimated_value_usd;
-    }
-
-    document.getElementById("save-btn").addEventListener("click", async () => {
-      if (!SCAN) return;
-      const atype = document.getElementById("f-acq").value;
-      const grade = document.getElementById("f-grade").value;
-      const gradeNum = document.getElementById("f-grade-num").value;
-      const titleParts = [SCAN.year, SCAN.set_name, SCAN.player_name, SCAN.card_number].filter(Boolean).join(" ");
-      const slabSuffix = grade !== "raw" && gradeNum ? ` ${grade.toUpperCase()} ${gradeNum}` : "";
-      const body = {
-        item_title: (titleParts || SCAN.card_name || "Scanned card") + slabSuffix,
-        sale_date: new Date().toISOString().slice(0,10),
-        sale_price: 0, platform_fees: 0,
-        platform_source: document.getElementById("f-platform").value,
-        acquisition_type: atype,
-        purchase_date: document.getElementById("f-purchase-date").value || null,
-        purchase_price: parseFloat(document.getElementById("f-purchase-price").value) || 0,
-        card_category: SCAN.sport_or_game || "",
-        image_path: SCAN.image_path || "",
-        notes: `Scanned via ${SCAN.source}${SCAN.confidence ? ` (${Math.round(SCAN.confidence*100)}% conf)`:""}`,
-      };
-      try {
-        await api("POST", "/api/transactions", body);
-        toast("Added to collection", "success");
-        document.getElementById("reset-btn").click();
-      } catch (e) { toast(e.message, "error"); }
-    });
   </script>
 </body>
 </html>

@@ -3418,18 +3418,36 @@ def waitlist_csv(request: Request, db: Session = Depends(get_db)):
 
 
 # ---------------------------------------------------------------------------
-# Card scanner (Unlimited only)
+# Card scanner (Coming soon — gated by CARDTAX_AI_SCANNER_ENABLED)
 # ---------------------------------------------------------------------------
+
+# Flip this env var (or set the constant below) to "1" to bring the AI scanner
+# back online once the OpenAI integration is ready to ship to users.
+AI_SCANNER_ENABLED = os.environ.get("CARDTAX_AI_SCANNER_ENABLED", "").lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
 
 
 @app.get("/api/scan/status")
 def scan_status(user: User = Depends(current_user)):
     """Lets the frontend know whether AI scanning is configured + plan-gated."""
+    if not AI_SCANNER_ENABLED:
+        return {
+            "ai_available": False,
+            "model": card_scanner.DEFAULT_MODEL,
+            "feature_unlocked": False,
+            "tier": user.subscription_tier or "free",
+            "coming_soon": True,
+        }
     return {
         "ai_available": card_scanner.is_available(),
         "model": card_scanner.DEFAULT_MODEL,
         "feature_unlocked": has_feature(user, "ai_scanner"),
         "tier": user.subscription_tier or "free",
+        "coming_soon": False,
     }
 
 
@@ -3438,6 +3456,15 @@ async def api_scan(
     file: UploadFile = File(...),
     user: User = Depends(current_user),
 ):
+    if not AI_SCANNER_ENABLED:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": "coming_soon",
+                "feature": "ai_scanner",
+                "message": "The AI card scanner is coming soon. Use manual entry or CSV import for now.",
+            },
+        )
     if not has_feature(user, "ai_scanner"):
         raise HTTPException(
             status_code=402,

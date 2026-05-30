@@ -499,20 +499,20 @@ function tt(text, label) {
 
 // Common tax-term tooltips reused across templates.
 const TAX_TOOLTIPS = {
-  FIFO: "First-in-first-out: when you sell a card, you assume you sold the earliest acquired copy first. IRS default.",
-  LIFO: "Last-in-first-out: assumes the most recently acquired copy was sold first.",
+  FIFO: "First-in-first-out: when you sell a card, you assume you sold the earliest acquired copy first. IRS default for investor capital-asset sales.",
+  LIFO: "Last-in-first-out: assumes the most recently acquired copy was sold first. An inventory accounting method (§472) — available only to dealers via a Form 970 election. NOT a permitted method for investor capital assets.",
   "Cost Basis": "What you can subtract from sale price before tax is calculated — purchase price, grading fees, shipping in.",
   NIIT: "Net Investment Income Tax — 3.8% extra federal tax on investment income above MAGI thresholds ($200k single, $250k MFJ).",
   "Capital Gains": "Profit from selling an asset for more than your basis. Short-term (≤1 yr) taxed as ordinary income; long-term taxed at preferential rates.",
   "Schedule C": "Form 1040 Schedule C — Profit or Loss from Business. Required if you're classified as a dealer.",
   "Schedule D": "Form 1040 Schedule D — Capital Gains and Losses. Required if you're classified as an investor.",
   "Form 8949": "Sales and Other Dispositions of Capital Assets. Itemizes each capital gain/loss line that flows to Schedule D.",
-  Collectibles: "IRC §408(m): trading cards are 'collectibles'. Long-term gains are taxed at up to 28% (vs. 15-20% for stocks).",
+  Collectibles: "IRC §408(m): trading cards are 'collectibles'. Long-term gains are taxed at up to 28% (vs. 0/15/20% brackets for stocks).",
   "Holding Period": "Days between purchase and sale. >365 days → long-term; ≤365 → short-term.",
   "Wash Sale": "Selling at a loss then rebuying within 30 days. The rule applies to stocks/securities — collectibles are NOT subject to wash sale rules (IRC §1091).",
   "QBI Deduction": "Qualified Business Income deduction (§199A): 20% deduction on dealer net profit, phased out above income thresholds.",
   "Self-Employment Tax": "15.3% combined Social Security + Medicare on dealer net profit (Schedule SE).",
-  "1099-K": "Form issued by payment platforms (eBay, Whatnot, PayPal) reporting your gross sales. 2026 threshold: $600.",
+  "1099-K": "Form issued by payment platforms (eBay, Whatnot, PayPal) reporting your gross sales. Post-OBBBA federal threshold: $20,000 AND 200 transactions on a single platform (both required). Tax obligation is unchanged whether or not the form is issued.",
 };
 
 // Render the disclaimer footer used on tax-summary and PDF pages.
