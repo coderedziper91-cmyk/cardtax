@@ -41,8 +41,8 @@ def _build_engine():
         url = _normalize_db_url(url)
         return create_engine(
             url,
-            pool_size=10,
-            max_overflow=20,
+            pool_size=5,
+            max_overflow=0,
             pool_pre_ping=True,
             pool_recycle=1800,
             echo=False,

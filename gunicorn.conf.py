@@ -11,7 +11,6 @@ overrides the bind address.
 
 from __future__ import annotations
 
-import multiprocessing
 import os
 
 
@@ -21,11 +20,7 @@ bind = f"0.0.0.0:{os.environ.get('PORT', '8000')}"
 
 # --- workers ---------------------------------------------------------------
 
-# 2 * CPU + 1 is the classic gunicorn recommendation. ``WEB_CONCURRENCY`` is
-# the standard escape hatch (Heroku/Railway honor it) for platforms that
-# already know how much CPU the container has.
-_default_workers = multiprocessing.cpu_count() * 2 + 1
-workers = int(os.environ.get("WEB_CONCURRENCY", str(_default_workers)))
+workers = int(os.environ.get("WEB_CONCURRENCY", 2))
 
 # FastAPI is async — use the uvicorn worker so each worker can serve many
 # concurrent in-flight requests on its single event loop.
