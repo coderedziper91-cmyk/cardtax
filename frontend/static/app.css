@@ -172,6 +172,7 @@ h1, h2, h3, h4 {
 }
 
 .nav-right { display: flex; align-items: center; gap: 14px; }
+.nav-marketing-actions { display: inline-flex; align-items: center; gap: 10px; }
 .theme-toggle {
   background: transparent;
   border: none;
@@ -323,6 +324,9 @@ h1, h2, h3, h4 {
   /* On small screens the user-menu in the top bar would crowd the hamburger;
      hide it — the drawer provides the same actions. */
   .user-menu { display: none !important; }
+  /* Same for the marketing "Sign in / Get early access" pair shown to
+     unauthenticated visitors on public pages — the drawer has these links. */
+  .nav-marketing-actions { display: none !important; }
 }
 @media (max-width: 480px) {
   .topbar-inner { padding: 0 14px; gap: 8px; }

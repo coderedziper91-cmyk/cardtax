@@ -93,6 +93,15 @@ const NAV = [
   { href: "/settings",     label: "Settings",        key: "settings" },
 ];
 
+// Nav shown to unauthenticated visitors on public pages (pricing/terms/privacy).
+// Features/FAQ jump to landing-page sections; Pricing is its own route.
+const MARKETING_NAV = [
+  { href: "/#features", label: "Features",         key: "features" },
+  { href: "/pricing",   label: "Pricing",          key: "pricing" },
+  { href: "/#faq",      label: "FAQ",              key: "faq" },
+  { href: "/dashboard", label: "App",              key: "app" },
+];
+
 const FOOTER_LINKS = [
   { href: "/pricing",        label: "Pricing",   key: "pricing" },
   { href: "/blog",           label: "Blog",      key: "blog" },
@@ -144,21 +153,56 @@ function mountShell(activeKey) {
   const shell = document.getElementById("app-shell");
   if (!shell) return;
 
+  // Public pages (pricing/terms/privacy/etc.) render the marketing nav by
+  // default so unauthenticated visitors see Features / Pricing / FAQ / App.
+  // If the auth check below finds a logged-in user, we swap to the app nav.
+  const PUBLIC_PAGES = new Set([
+    "blog", "help", "changelog", "refund-policy",
+    "pricing", "terms", "privacy", "landing",
+  ]);
+  const isPublic = PUBLIC_PAGES.has(activeKey);
+  const initialNav = isPublic ? MARKETING_NAV : NAV;
+  const brandHref = isPublic ? "/" : "/dashboard";
+
+  const renderNavLinks = (items, linkClass) => items.map(n =>
+    `<a href="${n.href}" class="${linkClass} ${n.key === activeKey ? "active" : ""}">${n.label}</a>`
+  ).join("");
+
+  const renderMobileExtras = (mode) => {
+    if (mode === "marketing") {
+      return `
+        <div style="height:1px;background:var(--rule);margin:12px 0"></div>
+        <a href="/login" class="mobile-drawer-link">Sign in</a>
+        <a href="/signup" class="mobile-drawer-link">Get early access</a>
+      `;
+    }
+    return `
+      <div style="height:1px;background:var(--rule);margin:12px 0"></div>
+      <a href="/account" class="mobile-drawer-link">Account & billing</a>
+      <a href="/pricing" class="mobile-drawer-link">Pricing</a>
+      <button class="mobile-drawer-link mobile-drawer-signout" id="mobile-drawer-signout" type="button">Sign out</button>
+    `;
+  };
+
   shell.innerHTML = `
     <div class="app-shell">
       <header class="topbar">
         <div class="topbar-inner">
-          <a href="/dashboard" class="brand">CardTax</a>
-          <nav class="nav">
-            ${NAV.map(n => `
-              <a href="${n.href}" class="nav-link ${n.key === activeKey ? "active" : ""}">${n.label}</a>
-            `).join("")}
+          <a href="${brandHref}" class="brand">CardTax</a>
+          <nav class="nav" id="primary-nav">
+            ${renderNavLinks(initialNav, "nav-link")}
           </nav>
           <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false" type="button">
             <span></span><span></span><span></span>
           </button>
           <div class="nav-right">
             <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+            ${isPublic ? `
+              <div class="nav-marketing-actions" id="nav-marketing-actions">
+                <a href="/login" class="btn btn-secondary" style="padding:6px 12px;font-size:13px">Sign in</a>
+                <a href="/signup" class="btn btn-primary" style="padding:6px 12px;font-size:13px">Get early access</a>
+              </div>
+            ` : ""}
             <div class="user-menu" id="user-menu" style="display:none">
               <button class="user-menu-btn" id="user-menu-btn" type="button" aria-haspopup="true" aria-expanded="false">
                 <span class="user-menu-email" id="user-menu-email"></span>
@@ -179,15 +223,12 @@ function mountShell(activeKey) {
         <div class="mobile-drawer-backdrop" id="mobile-drawer-backdrop"></div>
         <nav class="mobile-drawer-panel" aria-label="Mobile navigation">
           <div class="mobile-drawer-head">
-            <a href="/dashboard" class="brand">CardTax</a>
+            <a href="${brandHref}" class="brand">CardTax</a>
             <button class="mobile-drawer-close" id="mobile-drawer-close" aria-label="Close menu">×</button>
           </div>
-          <div class="mobile-drawer-links">
-            ${NAV.map(n => `<a href="${n.href}" class="mobile-drawer-link ${n.key === activeKey ? "active" : ""}">${n.label}</a>`).join("")}
-            <div style="height:1px;background:var(--rule);margin:12px 0"></div>
-            <a href="/account" class="mobile-drawer-link">Account & billing</a>
-            <a href="/pricing" class="mobile-drawer-link">Pricing</a>
-            <button class="mobile-drawer-link mobile-drawer-signout" id="mobile-drawer-signout" type="button">Sign out</button>
+          <div class="mobile-drawer-links" id="mobile-drawer-links">
+            ${renderNavLinks(initialNav, "mobile-drawer-link")}
+            ${renderMobileExtras(isPublic ? "marketing" : "app")}
           </div>
         </nav>
       </div>
@@ -267,16 +308,10 @@ function mountShell(activeKey) {
   // (blog, help, pricing, changelog, refund-policy) render fine without auth;
   // gated pages are protected server-side by `_gated_page`, so we don't need
   // to redirect from JS — just leave the user menu hidden when anonymous.
-  const PUBLIC_PAGES = new Set([
-    "blog", "help", "changelog", "refund-policy",
-    "pricing", "terms", "privacy", "landing",
-  ]);
-  const isPublic = PUBLIC_PAGES.has(activeKey);
-
   fetch("/api/auth/me").then(r => {
     if (r.status === 401) {
       // Anonymous visitor on a gated page: send them to /login. On public
-      // pages, just stay put.
+      // pages, just stay put (the marketing nav is already rendered).
       if (!isPublic) window.location.href = "/login";
       return null;
     }
@@ -285,6 +320,25 @@ function mountShell(activeKey) {
   }).then(user => {
     if (!user) return;
     if (user.email_verified === false) mountVerifyBanner(user);
+
+    // On a public page, an authenticated user gets the full app nav so they
+    // can navigate back into the product — swap out the marketing nav.
+    if (isPublic) {
+      const primary = document.getElementById("primary-nav");
+      if (primary) primary.innerHTML = renderNavLinks(NAV, "nav-link");
+      const mobileLinks = document.getElementById("mobile-drawer-links");
+      if (mobileLinks) {
+        mobileLinks.innerHTML = renderNavLinks(NAV, "mobile-drawer-link") + renderMobileExtras("app");
+        const ds = document.getElementById("mobile-drawer-signout");
+        if (ds) ds.addEventListener("click", async () => {
+          await fetch("/api/auth/logout", { method: "POST" });
+          window.location.href = "/login";
+        });
+      }
+      const mkt = document.getElementById("nav-marketing-actions");
+      if (mkt) mkt.remove();
+    }
+
     const menu = document.getElementById("user-menu");
     document.getElementById("user-menu-email").textContent = user.email || "";
     const tierEl = document.getElementById("user-menu-tier");

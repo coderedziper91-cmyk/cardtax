@@ -35,17 +35,14 @@
 
         <div id="error-banner" class="note note-danger" style="display:none;margin-bottom:18px"></div>
 
-        <button id="google-btn" class="btn btn-secondary auth-google" type="button">
+        <button id="google-btn" class="btn btn-secondary auth-google" type="button" style="display:none">
           <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
             <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.4-1.6 4-5.5 4-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.9 1.5l2.6-2.6C16.9 3.2 14.7 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12s4.4 9.8 9.8 9.8c5.7 0 9.4-4 9.4-9.6 0-.6-.1-1.1-.2-1.6H12z"/>
           </svg>
           Sign up with Google
         </button>
-        <div id="google-note" class="muted" style="font-size:12px;margin-top:6px;display:none">
-          Google sign-in needs <span class="mono">GOOGLE_CLIENT_ID</span> + <span class="mono">GOOGLE_CLIENT_SECRET</span> in your env.
-        </div>
 
-        <div class="auth-divider"><span>or</span></div>
+        <div class="auth-divider" id="google-divider" style="display:none"><span>or</span></div>
 
         <form id="signup-form" autocomplete="on" novalidate>
           <label class="field" style="margin-bottom:14px">
@@ -101,14 +98,12 @@
     }
     function clearError() { document.getElementById("error-banner").style.display = "none"; }
 
+    // Only reveal the Google sign-in button + divider when the server has
+    // OAuth credentials configured. Otherwise we just show email + password.
     fetch("/api/auth/google/configured").then(r => r.json()).then(d => {
-      const btn = document.getElementById("google-btn");
-      const note = document.getElementById("google-note");
-      if (!d.configured) {
-        btn.disabled = true;
-        btn.style.opacity = "0.6";
-        btn.style.cursor = "not-allowed";
-        note.style.display = "block";
+      if (d.configured) {
+        document.getElementById("google-btn").style.display = "";
+        document.getElementById("google-divider").style.display = "";
       }
     }).catch(() => {});
 
