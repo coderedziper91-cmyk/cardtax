@@ -92,7 +92,7 @@
     <div class="lp-nav-right">
       <button class="lp-theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
       <a href="/dashboard" class="btn btn-secondary lp-signin">Sign in</a>
-      <a href="#waitlist" class="btn btn-primary">Get early access</a>
+      <a href="/signup" class="btn btn-primary">Sign up free</a>
     </div>
   </div>
 </header>
@@ -111,7 +111,7 @@
           IRS-ready Schedule&nbsp;C, Schedule&nbsp;D, and Form&nbsp;8949 without the spreadsheet sprawl.
         </p>
         <div class="lp-hero-ctas">
-          <a href="#waitlist" class="btn btn-primary">Get early access</a>
+          <a href="/signup" class="btn btn-primary">Get started free</a>
           <a href="#features" class="btn btn-secondary">See how it works</a>
         </div>
         <div class="lp-hero-meta">
@@ -338,7 +338,7 @@
           <li>Federal Schedule D preview</li>
           <li>Hobby vs investor quiz</li>
         </ul>
-        <a href="#waitlist" class="btn btn-secondary lp-tier-cta">Get early access</a>
+        <a href="/signup" class="btn btn-secondary lp-tier-cta">Start free</a>
       </div>
 
       <div class="lp-tier">
@@ -355,7 +355,7 @@
           <li>State + local tax</li>
           <li>AI card scanner (coming soon)</li>
         </ul>
-        <a href="#waitlist" class="btn btn-secondary lp-tier-cta">Get early access</a>
+        <a href="/signup" class="btn btn-secondary lp-tier-cta">Get started</a>
       </div>
 
       <div class="lp-tier lp-tier-feature">
@@ -374,7 +374,7 @@
           <li>AI scanner (coming soon)</li>
           <li>Form 8949 export</li>
         </ul>
-        <a href="#waitlist" class="btn btn-primary lp-tier-cta">Get early access</a>
+        <a href="/signup" class="btn btn-primary lp-tier-cta">Get started</a>
       </div>
 
       <div class="lp-tier">
@@ -392,7 +392,7 @@
           <li>NOL carry-forward tracking</li>
           <li>Priority support</li>
         </ul>
-        <a href="#waitlist" class="btn btn-secondary lp-tier-cta">Get early access</a>
+        <a href="/signup" class="btn btn-secondary lp-tier-cta">Get started</a>
       </div>
     </div>
   </div>
@@ -500,53 +500,16 @@
 <!-- ============================================================
      Waitlist
      ============================================================ -->
-<section class="lp-waitlist" id="waitlist">
+<section class="lp-waitlist" id="cta">
   <div class="lp-waitlist-inner">
-    <div class="lp-eyebrow" style="text-align:center;justify-content:center">Early access</div>
-    <h2>Get in before tax season.</h2>
+    <div class="lp-eyebrow" style="text-align:center;justify-content:center">Ready to start?</div>
+    <h2>Stop guessing. Start tracking.</h2>
     <p class="lp-waitlist-sub">
-      We're rolling out access in waves. Drop your email and tell us where you sell — we'll let you
-      in early and grandfather you into a launch discount.
+      Create your free account in under a minute. Import your sales, pick a plan that fits, and
+      let CardTax handle the tax math so you can focus on the cards.
     </p>
-
-    <form class="lp-form" id="waitlist-form" novalidate>
-      <div class="lp-form-row">
-        <input type="email" class="input" name="email" id="wl-email" placeholder="you@youremail.com" required autocomplete="email">
-        <button type="submit" class="btn btn-primary" id="wl-submit">Join waitlist</button>
-      </div>
-
-      <div class="lp-form-label">Where do you sell?</div>
-      <div class="lp-platforms" id="wl-platforms">
-        <label class="lp-platform"><input type="checkbox" value="ebay">eBay</label>
-        <label class="lp-platform"><input type="checkbox" value="whatnot">Whatnot</label>
-        <label class="lp-platform"><input type="checkbox" value="comc">COMC</label>
-        <label class="lp-platform"><input type="checkbox" value="facebook">Facebook groups</label>
-        <label class="lp-platform"><input type="checkbox" value="mercari">Mercari</label>
-        <label class="lp-platform"><input type="checkbox" value="tcgplayer">TCGplayer</label>
-        <label class="lp-platform"><input type="checkbox" value="instagram">Instagram</label>
-        <label class="lp-platform"><input type="checkbox" value="shows">Card shows</label>
-        <label class="lp-platform"><input type="checkbox" value="other">Other</label>
-      </div>
-
-      <div class="lp-form-label">Monthly sales volume</div>
-      <div class="lp-volume" id="wl-volume">
-        <label><input type="radio" name="volume" value="<50">Under 50</label>
-        <label><input type="radio" name="volume" value="50-200">50&ndash;200</label>
-        <label><input type="radio" name="volume" value="200-1000">200&ndash;1,000</label>
-        <label><input type="radio" name="volume" value="1000+">1,000+</label>
-      </div>
-
-      <div class="lp-form-actions">
-        <span>We'll only email you about launch. No spam, ever.</span>
-      </div>
-    </form>
-
-    <div class="lp-success" id="waitlist-success" style="display:none">
-      <div class="lp-success-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-      <h3 id="wl-success-title">You're on the list.</h3>
-      <p id="wl-success-body">We'll send your invite as soon as access opens up.</p>
+    <div style="text-align:center;margin-top:1.5rem">
+      <a href="/signup" class="btn btn-primary" style="font-size:1.1rem;padding:.85rem 2.5rem">Create your free account</a>
     </div>
   </div>
 </section>
@@ -613,63 +576,7 @@
     });
   });
 
-  // ---- Waitlist submission ----
-  const form = document.getElementById("waitlist-form");
-  const success = document.getElementById("waitlist-success");
-  const submit = document.getElementById("wl-submit");
-  const successTitle = document.getElementById("wl-success-title");
-  const successBody  = document.getElementById("wl-success-body");
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = document.getElementById("wl-email").value.trim();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      submit.textContent = "Enter a valid email";
-      submit.disabled = true;
-      setTimeout(() => { submit.textContent = "Join waitlist"; submit.disabled = false; }, 1800);
-      return;
-    }
-    const platforms = Array.from(document.querySelectorAll("#wl-platforms input:checked")).map(i => i.value);
-    const volume = (document.querySelector("#wl-volume input:checked") || {}).value || "";
-
-    submit.disabled = true;
-    submit.textContent = "Saving…";
-
-    try {
-      const r = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          platforms,
-          monthly_volume: volume,
-          referrer: document.referrer || ""
-        }),
-      });
-      const body = await r.json().catch(() => ({}));
-      if (!r.ok) {
-        submit.disabled = false;
-        submit.textContent = "Try again";
-        document.getElementById("wl-email").focus();
-        if (body && body.detail) {
-          successTitle.textContent = "Couldn't save that";
-          successBody.textContent = body.detail;
-        }
-        return;
-      }
-      form.style.display = "none";
-      success.style.display = "block";
-      if (body.already_subscribed) {
-        successTitle.textContent = "You're already on it.";
-        successBody.textContent  = "We've got your email — we'll let you know the moment access opens.";
-      }
-    } catch (err) {
-      submit.disabled = false;
-      submit.textContent = "Try again";
-      successTitle.textContent = "Network error";
-      successBody.textContent  = "Please try again in a moment.";
-    }
-  });
+  // ---- Waitlist JS removed — open signup mode ----
 </script>
 
 </body>
